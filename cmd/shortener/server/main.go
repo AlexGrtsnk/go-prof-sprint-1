@@ -76,8 +76,8 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		flag := 0
 		for i := 0; i < 1000; i++ {
 			if mas[i][0] == string(id) {
+				res.Header().Set("Location", mas[i][1])
 				res.WriteHeader(http.StatusTemporaryRedirect)
-				io.WriteString(res, "Location: "+mas[i][1])
 				flag = 1
 				break
 			}
