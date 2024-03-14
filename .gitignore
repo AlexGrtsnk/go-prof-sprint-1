@@ -4,7 +4,10 @@
 *.dll
 *.so
 *.dylib
+<<<<<<< HEAD
 *.DS_Store
+=======
+>>>>>>> 377f9d5... Initial commit
 
 # Test binary, built with `go test -c`
 *.test
