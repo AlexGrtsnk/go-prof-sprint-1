@@ -28,7 +28,6 @@ func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
 
-	//rand.Seed(time.Now().UnixNano())
 	shortKey := make([]byte, keyLength)
 	for i := range shortKey {
 		shortKey[i] = charset[rand.Intn(len(charset))]
@@ -50,7 +49,11 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		b := new(bytes.Buffer)
 		io.WriteString(b, longURL)
 		if shortURL != "" {
-			http.Post(vbn+"/"+string(shortURL), "text/plain", b)
+			resp, err := http.Post(vbn+"/"+string(shortURL), "text/plain", b)
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
 			w.WriteHeader(http.StatusCreated)
 			io.WriteString(w, vbn+"/"+shortURL)
 		} else {
