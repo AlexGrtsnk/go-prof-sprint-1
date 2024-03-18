@@ -5,18 +5,20 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
 )
 
 type Config struct {
-	Home          string `env:"HOME"`
-	serverAddress string `env:"serverAddress"`
-	baseURL       string `env:"baseURL"`
+	Home           string `env:"HOME"`
+	server_address string `env:"SERVER_ADDRESS"`
+	base_url       string `env:"BASE_URL"`
 }
 
 type transform [1000][2]string
@@ -28,6 +30,7 @@ func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
 
+	rand.Seed(time.Now().UnixNano())
 	shortKey := make([]byte, keyLength)
 	for i := range shortKey {
 		shortKey[i] = charset[rand.Intn(len(charset))]
@@ -37,30 +40,28 @@ func generateShortKey() string {
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		a, err := io.ReadAll(r.Body)
+		a, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
-		longURL := string(a)
-		if longURL == "" {
+		long_url := string(a)
+		if long_url == "" {
 			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
 		}
-		shortURL := generateShortKey()
+		short_url := generateShortKey()
 		b := new(bytes.Buffer)
-		io.WriteString(b, longURL)
-		if shortURL != "" {
-			resp, err := http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
+		io.WriteString(b, long_url)
+		if short_url != "" {
+			http.Post(vbn+"/"+string(short_url), "text/plain", b)
 			w.WriteHeader(http.StatusCreated)
-			io.WriteString(w, "http://localhost"+string(flagRunAddr)+vbn+"/"+shortURL)
+			io.WriteString(w, vbn+"/"+short_url)
 		} else {
 			http.Error(w, "cant create short url", http.StatusBadRequest)
 		}
 		return
 	} else {
+		w.Header().Set("Location", "sadasdsadwwq")
+		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, "No get method allowed")
 	}
 }
@@ -90,12 +91,12 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if req.Method == http.MethodPost {
-		a, _ := io.ReadAll(req.Body)
-		longURL := string(a)
+		a, _ := ioutil.ReadAll(req.Body)
+		long_url := string(a)
 		vars := mux.Vars(req)
-		id := vars["id"]
+		id, _ := vars["id"]
 		mas[kol][0] = string(id)
-		mas[kol][1] = string(longURL)
+		mas[kol][1] = string(long_url)
 		kol++
 	}
 }
@@ -116,11 +117,11 @@ func run() error {
 		log.Fatal(err)
 	}
 
-	if cfg.serverAddress != "" {
-		flagRunAddr = cfg.serverAddress
+	if cfg.server_address != "" {
+		flagRunAddr = "8080"
 	}
-	if cfg.baseURL != "" {
-		vbn = cfg.baseURL
+	if cfg.base_url != "" {
+		vbn = cfg.base_url
 	}
 	log.Println(cfg)
 
@@ -128,7 +129,7 @@ func run() error {
 	fmt.Println("Running api on", vbn)
 	kol = 0
 	mux1 := mux.NewRouter()
-	mux1.HandleFunc(vbn+`/{id}`, apiPage)
+	mux1.HandleFunc(`/{id}`, apiPage)
 	mux1.HandleFunc(`/`, mainPage)
 	return http.ListenAndServe(flagRunAddr, mux1)
 }
@@ -137,7 +138,13 @@ var flagRunAddr string
 var vbn string
 
 func parseFlags() {
-	flag.StringVar(&flagRunAddr, "a", ":8080", "address and port to run server")
-	flag.StringVar(&vbn, "b", "", "api page existance url adress")
+	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
 	flag.Parse()
+	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
+		vbn = "http://" + flagRunAddr
+	}
+	if flagRunAddr == "localhost:8080" && vbn != "http://localhost:8080" {
+		flagRunAddr = vbn[7:]
+	}
 }
