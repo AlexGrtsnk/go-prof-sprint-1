@@ -38,7 +38,7 @@ func generateShortKey() string {
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		a, err := ioutil.ReadAll(r.Body)
+		a, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -87,7 +87,7 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if req.Method == http.MethodPost {
-		a, _ := ioutil.ReadAll(req.Body)
+		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
