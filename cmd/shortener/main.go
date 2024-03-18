@@ -49,7 +49,11 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		b := new(bytes.Buffer)
 		io.WriteString(b, longURL)
 		if shortURL != "" {
-			http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
+			resp, err := http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
 			w.WriteHeader(http.StatusCreated)
 			io.WriteString(w, "http://localhost"+string(flagRunAddr)+vbn+"/"+shortURL)
 		} else {
