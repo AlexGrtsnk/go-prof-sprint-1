@@ -5,11 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
@@ -30,7 +28,7 @@ func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
 
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 	shortKey := make([]byte, keyLength)
 	for i := range shortKey {
 		shortKey[i] = charset[rand.Intn(len(charset))]
@@ -52,7 +50,7 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		b := new(bytes.Buffer)
 		io.WriteString(b, longURL)
 		if shortURL != "" {
-			http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
+			//http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
 			w.WriteHeader(http.StatusCreated)
 			io.WriteString(w, "http://localhost"+string(flagRunAddr)+vbn+"/"+shortURL)
 		} else {
