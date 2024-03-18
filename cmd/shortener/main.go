@@ -14,9 +14,9 @@ import (
 )
 
 type Config struct {
-	Home          string `env:"HOME"`
-	serverAddress string `env:"serverAddress"`
-	baseURL       string `env:"baseURL"`
+	Home           string `env:"HOME"`
+	server_address string `env:"SERVER_ADDRESS"`
+	base_url       string `env:"BASE_URL"`
 }
 
 type transform [1000][2]string
@@ -28,7 +28,6 @@ func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
 
-	//rand.Seed(time.Now().UnixNano())
 	shortKey := make([]byte, keyLength)
 	for i := range shortKey {
 		shortKey[i] = charset[rand.Intn(len(charset))]
@@ -42,17 +41,17 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		longURL := string(a)
-		if longURL == "" {
+		long_url := string(a)
+		if long_url == "" {
 			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
 		}
-		shortURL := generateShortKey()
+		short_url := generateShortKey()
 		b := new(bytes.Buffer)
-		io.WriteString(b, longURL)
-		if shortURL != "" {
-			//http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(shortURL), "text/plain", b)
+		io.WriteString(b, long_url)
+		if short_url != "" {
+			http.Post("http://localhost"+string(flagRunAddr)+vbn+"/"+string(short_url), "text/plain", b)
 			w.WriteHeader(http.StatusCreated)
-			io.WriteString(w, "http://localhost"+string(flagRunAddr)+vbn+"/"+shortURL)
+			io.WriteString(w, "http://localhost"+string(flagRunAddr)+vbn+"/"+short_url)
 		} else {
 			http.Error(w, "cant create short url", http.StatusBadRequest)
 		}
@@ -88,11 +87,11 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 	}
 	if req.Method == http.MethodPost {
 		a, _ := io.ReadAll(req.Body)
-		longURL := string(a)
+		long_url := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
 		mas[kol][0] = string(id)
-		mas[kol][1] = string(longURL)
+		mas[kol][1] = string(long_url)
 		kol++
 	}
 }
@@ -113,11 +112,11 @@ func run() error {
 		log.Fatal(err)
 	}
 
-	if cfg.serverAddress != "" {
-		flagRunAddr = cfg.serverAddress
+	if cfg.server_address != "" {
+		flagRunAddr = cfg.server_address
 	}
-	if cfg.baseURL != "" {
-		vbn = cfg.baseURL
+	if cfg.base_url != "" {
+		vbn = cfg.base_url
 	}
 	log.Println(cfg)
 
