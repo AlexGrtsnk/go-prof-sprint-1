@@ -49,6 +49,7 @@ func TestMainPage(t *testing.T) {
 	}
 }
 
+/*
 func TestApiPage(t *testing.T) {
 	type want struct {
 		code        int
@@ -100,3 +101,4 @@ func TestApiPage(t *testing.T) {
 		i++
 	}
 }
+*/

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"flag"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Config struct {
@@ -19,10 +21,7 @@ type Config struct {
 	baseURL       string `env:"baseURL"`
 }
 
-type transform [1000][2]string
-
-var mas transform
-var kol int
+var db *sql.DB
 
 func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -77,15 +76,31 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 			io.WriteString(res, "bad request")
 		}
 		flag := 0
-		for i := 0; i < 1000; i++ {
-			if mas[i][0] == string(id) {
-				res.Header().Set("Location", mas[i][1])
-				res.WriteHeader(http.StatusTemporaryRedirect)
-				flag = 1
-				break
-			}
+		quer := "SELECT longURL FROM short_longURL WHERE short_url = '" + string(id) + "';"
+		rows, err := db.Query(quer)
+		if rows.Err() != nil {
+			log.Fatal(err)
 		}
-		//return
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+
+			var longURL string
+			flag = 1
+			err = rows.Scan(&longURL)
+			res.Header().Set("Location", longURL)
+			res.WriteHeader(http.StatusTemporaryRedirect)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("%s\n", longURL)
+		}
+
 		if flag == 0 {
 			res.WriteHeader(http.StatusNotFound)
 			io.WriteString(res, "No full url for this address")
@@ -96,9 +111,12 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		mas[kol][0] = string(id)
-		mas[kol][1] = string(longURL)
-		kol++
+		quer := "INSERT INTO short_longURL(short_url, longURL) VALUES('" + string(id) + "', '" + string(longURL) + "');"
+		_, err := db.Exec(quer)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 }
 
@@ -125,10 +143,25 @@ func run() error {
 		vbn = cfg.baseURL
 	}
 	log.Println(cfg)
+	db, err = sql.Open("sqlite3", "test.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	sts := `
+DROP TABLE IF EXISTS short_longURL;
+CREATE TABLE short_longURL(id INTEGER PRIMARY KEY, short_url TEXT, longURL TEXT);
+`
+	_, err = db.Exec(sts)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", vbn)
-	kol = 0
 	mux1 := mux.NewRouter()
 	mux1.HandleFunc(`/{id}`, apiPage)
 	mux1.HandleFunc(`/`, mainPage)
