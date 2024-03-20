@@ -46,7 +46,10 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		}
 		shortURL := generateShortKey()
 		b := new(bytes.Buffer)
-		io.WriteString(b, longURL)
+		_, err = io.WriteString(b, longURL)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if shortURL != "" {
 			resp, err := http.Post(vbn+"/"+string(shortURL), "text/plain", b)
 			if err != nil {
@@ -54,7 +57,10 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 			}
 			defer resp.Body.Close()
 			w.WriteHeader(http.StatusCreated)
-			io.WriteString(w, vbn+"/"+shortURL)
+			_, err = io.WriteString(w, vbn+"/"+shortURL)
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			http.Error(w, "cant create short url", http.StatusBadRequest)
 		}
@@ -62,7 +68,10 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("Location", "sadasdsadwwq")
 		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, "No get method allowed")
+		_, err := io.WriteString(w, "No get method allowed")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -73,7 +82,10 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		if !ok {
 			fmt.Println("id is missing in parameters")
 			res.WriteHeader(http.StatusBadRequest)
-			io.WriteString(res, "bad request")
+			_, err := io.WriteString(res, "bad request")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		flag := 0
 		quer := "SELECT longURL FROM short_longURL WHERE short_url = '" + string(id) + "';"
@@ -103,7 +115,10 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 
 		if flag == 0 {
 			res.WriteHeader(http.StatusNotFound)
-			io.WriteString(res, "No full url for this address")
+			_, err = io.WriteString(res, "No full url for this address")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	if req.Method == http.MethodPost {
