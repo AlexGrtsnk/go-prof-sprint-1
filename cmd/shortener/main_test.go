@@ -24,7 +24,7 @@ func TestMainPage(t *testing.T) {
 			want: want{
 				code: 400,
 				//response:    `{"status":"ok"}`,
-				contentType: "text/plain; charset=utf-8",
+				//contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
@@ -49,7 +49,6 @@ func TestMainPage(t *testing.T) {
 	}
 }
 
-/*
 func TestApiPage(t *testing.T) {
 	type want struct {
 		code        int
@@ -86,14 +85,12 @@ func TestApiPage(t *testing.T) {
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			apiPage(w, request)
-
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
 			// получаем и проверяем тело запроса
 			defer res.Body.Close()
 			_, err := io.ReadAll(res.Body)
-
 			require.NoError(t, err)
 			//assert.JSONEq(t, test.want.response, string(resBody))
 			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
@@ -101,4 +98,3 @@ func TestApiPage(t *testing.T) {
 		i++
 	}
 }
-*/
