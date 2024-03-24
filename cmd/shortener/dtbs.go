@@ -6,7 +6,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func db_mnp() (a string, err error) {
+func dbMnp() (a string, err error) {
 	var db *sql.DB
 	var vbn string
 	db, err = sql.Open("sqlite3", "conf.db")
@@ -31,7 +31,7 @@ func db_mnp() (a string, err error) {
 	return vbn, nil
 }
 
-func db_appg_gt(id string) (a string, b int, err error) {
+func dbAppgGt(id string) (a string, b int, err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "shortlongurl.db")
 	if err != nil {
@@ -56,7 +56,7 @@ func db_appg_gt(id string) (a string, b int, err error) {
 	return longURL, 1, nil
 }
 
-func db_appg_pst(id string, longURL string) (err error) {
+func dbAppgPst(id string, longURL string) (err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "shortlongurl.db")
 	if err != nil {
@@ -71,7 +71,7 @@ func db_appg_pst(id string, longURL string) (err error) {
 	return nil
 }
 
-func db_mn_cf(flagRunAddr string, vbn string) (err error) {
+func dbMnCf(flagRunAddr string, vbn string) (err error) {
 	db, err := sql.Open("sqlite3", "shortlongurl.db")
 	if err != nil {
 		return err

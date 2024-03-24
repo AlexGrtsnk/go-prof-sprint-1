@@ -32,7 +32,7 @@ func generateShortKey() string {
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
-	vbn, err := db_mnp()
+	vbn, err := dbMnp()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the database side")
@@ -92,7 +92,7 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		longURL, flag, err := db_appg_gt(id)
+		longURL, flag, err := dbAppgGt(id)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -119,7 +119,7 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db_appg_pst(id, longURL)
+		err := dbAppgPst(id, longURL)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -142,7 +142,7 @@ func run() error {
 		vbn = cfg.baseURL
 	}
 	log.Println(cfg)
-	err = db_mn_cf(flagRunAddr, vbn)
+	err = dbMnCf(flagRunAddr, vbn)
 	if err != nil {
 		log.Fatal(err)
 	}
