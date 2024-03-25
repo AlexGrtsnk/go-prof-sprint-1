@@ -215,7 +215,11 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		//id := vars["url"]
 		err = dbAppgPst(shortURL, longURL)
 		if err != nil {
-			log.Fatal(err)
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		var answ Answ
 		answ.Result = "http://localhost:8080/" + shortURL
@@ -226,7 +230,10 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		}
 		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusCreated)
-		res.Write(resp)
+		_, err = res.Write(resp)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
