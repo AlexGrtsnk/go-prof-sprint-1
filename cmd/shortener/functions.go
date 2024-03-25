@@ -2,16 +2,19 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -150,8 +153,9 @@ func run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", vbn)
 	mux1 := mux.NewRouter()
-	mux1.HandleFunc(`/{id}`, apiPage)
-	mux1.HandleFunc(`/`, mainPage)
+	mux1.HandleFunc(`/{id}`, WithLogging(apiHandler()))
+	mux1.HandleFunc(`/`, WithLogging(mainHandler()))
+	mux1.HandleFunc(`/api/shorten`, WithLogging(jsonHandler()))
 	return http.ListenAndServe(flagRunAddr, mux1)
 }
 
@@ -168,4 +172,114 @@ func parseFlags() (a string, b string) {
 		flagRunAddr = vbn[7:]
 	}
 	return flagRunAddr, vbn
+}
+
+func apiHandler() http.Handler {
+	//fn := a
+	fn := apiPage
+	return http.HandlerFunc(fn)
+}
+
+func mainHandler() http.Handler {
+	//fn := a
+	fn := mainPage
+	return http.HandlerFunc(fn)
+}
+
+func jsonPage(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		var ques Ques
+		var buf bytes.Buffer
+		// читаем тело запроса
+		_, err := buf.ReadFrom(req.Body)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// десериализуем JSON в Visitor
+		if err = json.Unmarshal(buf.Bytes(), &ques); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		longURL := ques.LongUrl
+
+		shortURL := generateShortKey()
+		b := new(bytes.Buffer)
+		_, err = io.WriteString(b, longURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		//a, _ := io.ReadAll(req.Body)
+		//longURL := string(a)
+		//vars := mux.Vars(req)
+		//id := vars["url"]
+		err = dbAppgPst(shortURL, longURL)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var answ Answ
+		answ.Result = shortURL
+		resp, err := json.Marshal(answ)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
+		res.Write(resp)
+	}
+}
+
+/*
+curl -X POST http://localhost:8080/api/shorten -H 'Content-Type: application/json' -d '{"url": "https://practicum.yandex.ru"}'
+*/
+type Ques struct {
+	LongUrl string `json:"url"`
+}
+
+type Answ struct {
+	Result string `json:"result"`
+}
+
+func jsonHandler() http.Handler {
+	fn := jsonPage
+	return http.HandlerFunc(fn)
+}
+
+// WithLogging добавляет дополнительный код для регистрации сведений о запросе
+// и возвращает новый http.Handler.
+func WithLogging(h http.Handler) func(w http.ResponseWriter, r *http.Request) {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		// вызываем панику, если ошибка
+		panic(err)
+	}
+	sugar := *logger.Sugar()
+	logFn := func(w http.ResponseWriter, r *http.Request) {
+		// функция Now() возвращает текущее время
+		start := time.Now()
+
+		// эндпоинт /ping
+		uri := r.RequestURI
+		// метод запроса
+		method := r.Method
+
+		// точка, где выполняется хендлер pingHandler
+		h.ServeHTTP(w, r) // обслуживание оригинального запроса
+
+		// Since возвращает разницу во времени между start
+		// и моментом вызова Since. Таким образом можно посчитать
+		// время выполнения запроса.
+		duration := time.Since(start)
+
+		// отправляем сведения о запросе в zap
+		sugar.Infoln(
+			"uri", uri,
+			"method", method,
+			"duration", duration,
+		)
+
+	}
+	// возвращаем функционально расширенный хендлер
+	return logFn
 }
