@@ -201,7 +201,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-		longURL := ques.LongUrl
+		longURL := ques.LongURL
 
 		shortURL := generateShortKey()
 		b := new(bytes.Buffer)
@@ -218,7 +218,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 		var answ Answ
-		answ.Result = shortURL
+		answ.Result = "http://localhost:8080/" + shortURL
 		resp, err := json.Marshal(answ)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -234,7 +234,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 curl -X POST http://localhost:8080/api/shorten -H 'Content-Type: application/json' -d '{"url": "https://practicum.yandex.ru"}'
 */
 type Ques struct {
-	LongUrl string `json:"url"`
+	LongURL string `json:"url"`
 }
 
 type Answ struct {
