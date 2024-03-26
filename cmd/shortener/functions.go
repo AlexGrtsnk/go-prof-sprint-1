@@ -210,9 +210,9 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func run() error {
-	flagRunAddr, vbn, fileName := parseFlags()
 	var cfg Config
 	err := env.Parse(&cfg)
+	flagRunAddr, vbn, fileName := parseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
