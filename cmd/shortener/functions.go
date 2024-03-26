@@ -19,7 +19,7 @@ type Config struct {
 	Home          string `env:"HOME"`
 	serverAddress string `env:"serverAddress"`
 	baseURL       string `env:"baseURL"`
-	flnm          string `env:"FILE_STORAGE_PATH"`
+	flnm          string `env:"FileStoragePath"`
 }
 
 func generateShortKey() string {
@@ -235,7 +235,7 @@ func run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Println("Running server on DASDASDSDSADSAD", fileName)
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", vbn)
 	mux1 := mux.NewRouter()
