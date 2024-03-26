@@ -19,7 +19,7 @@ type Config struct {
 	Home          string `env:"HOME"`
 	serverAddress string `env:"serverAddress"`
 	baseURL       string `env:"baseURL"`
-	flnm          string `env:"FileStoragePath"`
+	flnm          string `env:"FILE_STORAGE_PATH"`
 }
 
 func generateShortKey() string {
