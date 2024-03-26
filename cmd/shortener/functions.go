@@ -37,13 +37,21 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 	vbn, err := dbMnp()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, err = io.WriteString(w, "Error on the database side")
+		_, err = io.WriteString(w, "Error on the side")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	reader, err := xzpjsn(w, r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = io.WriteString(w, "Error on the side")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	if r.Method == http.MethodPost {
-		a, err := io.ReadAll(r.Body)
+		a, err := io.ReadAll(reader)
 		if err != nil {
 			log.Fatal(err)
 		}

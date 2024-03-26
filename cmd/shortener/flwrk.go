@@ -7,9 +7,9 @@ import (
 )
 
 type Event struct {
-	ID        int    `json:"id"`
-	Short_URL string `json:"short_url"`
-	Long_URL  string `json:"longURL"`
+	ID       int    `json:"id"`
+	ShortURL string `json:"short_url"`
+	LongURL  string `json:"longURL"`
 }
 
 type Producer struct {
@@ -81,7 +81,7 @@ func flpst(shortURL string, longURL string) (err error) {
 		log.Fatal(err)
 	}
 	//defer Consumer.Close()
-	var events = []*Event{{ID: id, Short_URL: shortURL, Long_URL: longURL}}
+	var events = []*Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
 		log.Fatal(err)

@@ -123,7 +123,7 @@ func dbins(id string) (err error) {
 		if err_ != nil {
 			break
 		}
-		quer := `INSERT INTO short_longURL(id, short_url, longURL) VALUES (` + fmt.Sprint(readEvent.ID) + `, '` + string(readEvent.Short_URL) + `', '` + readEvent.Long_URL + `');`
+		quer := `INSERT INTO short_longURL(id, short_url, longURL) VALUES (` + fmt.Sprint(readEvent.ID) + `, '` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `');`
 		_, err = db.Exec(quer)
 		if err != nil {
 			return err
