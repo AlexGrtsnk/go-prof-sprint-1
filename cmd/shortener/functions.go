@@ -9,18 +9,17 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
 )
 
 type Config struct {
 	Home          string `env:"HOME"`
 	serverAddress string `env:"serverAddress"`
 	baseURL       string `env:"baseURL"`
+	flnm          string `env:"FILE_STORAGE_PATH"`
 }
 
 func generateShortKey() string {
@@ -126,72 +125,33 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		err = flpst(id, longURL)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 	}
-}
-
-func run() error {
-	flagRunAddr, vbn := parseFlags()
-	var cfg Config
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if cfg.serverAddress != "" {
-		flagRunAddr = "8080"
-	}
-	if cfg.baseURL != "" {
-		vbn = cfg.baseURL
-	}
-	log.Println(cfg)
-	err = dbMnCf(flagRunAddr, vbn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Running server on", flagRunAddr)
-	fmt.Println("Running api on", vbn)
-	mux1 := mux.NewRouter()
-	mux1.HandleFunc(`/{id}`, WithLogging(apiHandler()))
-	mux1.HandleFunc(`/`, WithLogging(mainHandler()))
-	mux1.HandleFunc(`/api/shorten`, WithLogging(jsonHandler()))
-	return http.ListenAndServe(flagRunAddr, mux1)
-}
-
-func parseFlags() (a string, b string) {
-	var flagRunAddr string
-	var vbn string
-	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
-	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
-	flag.Parse()
-	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
-		vbn = "http://" + flagRunAddr
-	}
-	if flagRunAddr == "localhost:8080" && vbn != "http://localhost:8080" {
-		flagRunAddr = vbn[7:]
-	}
-	return flagRunAddr, vbn
-}
-
-func apiHandler() http.Handler {
-	//fn := a
-	fn := apiPage
-	return http.HandlerFunc(fn)
-}
-
-func mainHandler() http.Handler {
-	//fn := a
-	fn := mainPage
-	return http.HandlerFunc(fn)
 }
 
 func jsonPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
+		reader, err := xzpjsn(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
 		var ques Ques
 		var buf bytes.Buffer
 		// читаем тело запроса
-		_, err := buf.ReadFrom(req.Body)
+		_, err = buf.ReadFrom(reader)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
@@ -209,10 +169,6 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		//a, _ := io.ReadAll(req.Body)
-		//longURL := string(a)
-		//vars := mux.Vars(req)
-		//id := vars["url"]
 		err = dbAppgPst(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -234,12 +190,80 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		err = flpst(shortURL, longURL)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }
 
-/*
-curl -X POST http://localhost:8080/api/shorten -H 'Content-Type: application/json' -d '{"url": "https://practicum.yandex.ru"}'
-*/
+func run() error {
+	flagRunAddr, vbn, fileName := parseFlags()
+	var cfg Config
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cfg.serverAddress != "" {
+		flagRunAddr = "8080"
+	}
+	if cfg.baseURL != "" {
+		vbn = cfg.baseURL
+	}
+	if cfg.flnm != "" {
+		fileName = cfg.flnm
+	}
+	log.Println(cfg)
+	err = dbMnCf(flagRunAddr, vbn, fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = dbins(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Running server on", flagRunAddr)
+	fmt.Println("Running api on", vbn)
+	mux1 := mux.NewRouter()
+	mux1.HandleFunc(`/{id}`, WithLogging(apiHandler()))
+	mux1.HandleFunc(`/`, WithLogging(mainHandler()))
+	mux1.HandleFunc(`/api/shorten`, WithLogging(jsonHandler()))
+	return http.ListenAndServe(flagRunAddr, gzipHandle(mux1))
+}
+
+func parseFlags() (a string, b string, f string) {
+	var flagRunAddr string
+	var vbn string
+	var fileName string
+	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
+	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
+	flag.StringVar(&fileName, "f", "test.txt", "txt file with short and long urls")
+	flag.Parse()
+	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
+		vbn = "http://" + flagRunAddr
+	}
+	if flagRunAddr == "localhost:8080" && vbn != "http://localhost:8080" {
+		flagRunAddr = vbn[7:]
+	}
+	return flagRunAddr, vbn, fileName
+}
+
+func apiHandler() http.Handler {
+	fn := apiPage
+	return http.HandlerFunc(fn)
+}
+
+func mainHandler() http.Handler {
+	fn := mainPage
+	return http.HandlerFunc(fn)
+}
+
 type Ques struct {
 	LongURL string `json:"url"`
 }
@@ -251,42 +275,4 @@ type Answ struct {
 func jsonHandler() http.Handler {
 	fn := jsonPage
 	return http.HandlerFunc(fn)
-}
-
-// WithLogging добавляет дополнительный код для регистрации сведений о запросе
-// и возвращает новый http.Handler.
-func WithLogging(h http.Handler) func(w http.ResponseWriter, r *http.Request) {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		// вызываем панику, если ошибка
-		panic(err)
-	}
-	sugar := *logger.Sugar()
-	logFn := func(w http.ResponseWriter, r *http.Request) {
-		// функция Now() возвращает текущее время
-		start := time.Now()
-
-		// эндпоинт /ping
-		uri := r.RequestURI
-		// метод запроса
-		method := r.Method
-
-		// точка, где выполняется хендлер pingHandler
-		h.ServeHTTP(w, r) // обслуживание оригинального запроса
-
-		// Since возвращает разницу во времени между start
-		// и моментом вызова Since. Таким образом можно посчитать
-		// время выполнения запроса.
-		duration := time.Since(start)
-
-		// отправляем сведения о запросе в zap
-		sugar.Infoln(
-			"uri", uri,
-			"method", method,
-			"duration", duration,
-		)
-
-	}
-	// возвращаем функционально расширенный хендлер
-	return logFn
 }
