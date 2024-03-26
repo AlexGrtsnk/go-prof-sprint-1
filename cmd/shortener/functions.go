@@ -16,10 +16,10 @@ import (
 )
 
 type Config struct {
-	Home          string `env:"HOME"`
-	serverAddress string `env:"serverAddress"`
-	baseURL       string `env:"baseURL"`
-	flnm          string `env:"FILE_STORAGE_PATH"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	Home            string `env:"HOME"`
+	serverAddress   string `env:"serverAddress"`
+	baseURL         string `env:"baseURL"`
 }
 
 func generateShortKey() string {
@@ -223,8 +223,8 @@ func run() error {
 	if cfg.baseURL != "" {
 		vbn = cfg.baseURL
 	}
-	if cfg.flnm != "" {
-		fileName = cfg.flnm
+	if cfg.FileStoragePath != "" {
+		fileName = cfg.FileStoragePath
 	}
 	log.Println(cfg)
 	err = dbMnCf(flagRunAddr, vbn, fileName)
@@ -235,7 +235,7 @@ func run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Running server on DASDASDSDSADSAD", fileName)
+	fmt.Println("where db is held", fileName)
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", vbn)
 	mux1 := mux.NewRouter()
@@ -251,7 +251,7 @@ func parseFlags() (a string, b string, f string) {
 	var fileName string
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
-	flag.StringVar(&fileName, "f", "/tmp/bmq9Ei", "txt file with short and long urls")
+	flag.StringVar(&fileName, "f", "text.txt", "txt file with short and long urls")
 	flag.Parse()
 	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
 		vbn = "http://" + flagRunAddr
