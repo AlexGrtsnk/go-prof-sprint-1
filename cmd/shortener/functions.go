@@ -251,7 +251,7 @@ func parseFlags() (a string, b string, f string) {
 	var fileName string
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
-	flag.StringVar(&fileName, "f", "test.txt", "txt file with short and long urls")
+	flag.StringVar(&fileName, "f", "/tmp/bmq9Ei", "txt file with short and long urls")
 	flag.Parse()
 	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
 		vbn = "http://" + flagRunAddr
