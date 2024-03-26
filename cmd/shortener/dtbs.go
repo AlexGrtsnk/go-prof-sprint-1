@@ -97,7 +97,7 @@ CREATE TABLE short_longURL(id INTEGER PRIMARY KEY, short_url TEXT, longURL TEXT)
 	defer db1.Close()
 	sts1 := `
 DROP TABLE IF EXISTS cfg;
-CREATE TABLE cfg (id INTEGER PRIMARY KEY, flagRunAddr TEXT, vbn TEXT);
+CREATE TABLE cfg (id INTEGER PRIMARY KEY, flagRunAddr TEXT, vbn TEXT, flnm TEXT);
 INSERT INTO cfg(flagRunAddr, vbn, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(vbn) + `', '` + fileName + `');`
 	_, err = db1.Exec(sts1)
 
