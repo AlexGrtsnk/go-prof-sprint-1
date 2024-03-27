@@ -1,8 +1,7 @@
-package main
+package flw
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 )
 
@@ -65,26 +64,4 @@ func (c *Consumer) ReadEvent() (*Event, error) {
 
 func (c *Consumer) Close() error {
 	return c.file.Close()
-}
-func flpst(shortURL string, longURL string) (err error) {
-	fileName, err := dbfln()
-	if err != nil {
-		log.Fatal(err)
-	}
-	Producer, err := NewProducer(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer Producer.Close()
-	id, err := dbjsnpps(shortURL, longURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//defer Consumer.Close()
-	var events = []*Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
-	err = Producer.WriteEvent(events[0])
-	if err != nil {
-		log.Fatal(err)
-	}
-	return nil
 }

@@ -10,6 +10,8 @@ import (
 	"math/rand"
 	"net/http"
 
+	db "go-prof-sprint-1/cmd/dtbs"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -34,7 +36,7 @@ func generateShortKey() string {
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
-	vbn, err := dbMnp()
+	vbn, err := db.DBMainPageCfg()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -81,7 +83,6 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	} else {
-		w.Header().Set("Location", "sadasdsadwwq")
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "No get method allowed")
 		if err != nil {
@@ -102,7 +103,7 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		longURL, flag, err := dbAppgGt(id)
+		longURL, flag, err := db.DBAppgGt(id)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -129,11 +130,11 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := dbAppgPst(id, longURL)
+		err := db.DBAppgPst(id, longURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = flpst(id, longURL)
+		err = db.Flpst(id, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -158,13 +159,11 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 
 		var ques Ques
 		var buf bytes.Buffer
-		// читаем тело запроса
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-		// десериализуем JSON в Visitor
 		if err = json.Unmarshal(buf.Bytes(), &ques); err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
@@ -177,7 +176,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = dbAppgPst(shortURL, longURL)
+		err = db.DBAppgPst(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -198,7 +197,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = flpst(shortURL, longURL)
+		err = db.Flpst(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -227,11 +226,11 @@ func run() error {
 		fileName = cfg.FileStoragePath
 	}
 	log.Println(cfg)
-	err = dbMnCf(flagRunAddr, vbn, fileName)
+	err = db.DBMnCf(flagRunAddr, vbn, fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = dbins(fileName)
+	err = db.DBIns(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
