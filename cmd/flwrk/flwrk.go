@@ -1,4 +1,4 @@
-package flw
+package fileworks
 
 import (
 	"encoding/json"

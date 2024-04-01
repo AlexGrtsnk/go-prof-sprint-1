@@ -1,4 +1,4 @@
-package main
+package functions
 
 import (
 	"bytes"
@@ -11,6 +11,8 @@ import (
 	"net/http"
 
 	db "go-prof-sprint-1/cmd/dtbs"
+	gzp "go-prof-sprint-1/cmd/gzp"
+	lg "go-prof-sprint-1/cmd/logger"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"
@@ -35,8 +37,8 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
-func mainPage(w http.ResponseWriter, r *http.Request) {
-	vbn, err := db.DBMainPageCfg()
+func MainPage(w http.ResponseWriter, r *http.Request) {
+	vbn, err := db.DataBaseMainPageCfg()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -44,7 +46,7 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
-	reader, err := xzpjsn(w, r)
+	reader, err := gzp.Xzpjsn(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -91,7 +93,7 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func apiPage(res http.ResponseWriter, req *http.Request) {
+func APIPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -103,7 +105,7 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		longURL, flag, err := db.DBAppgGt(id)
+		longURL, flag, err := db.DatBaseAPIPageGet(id)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -130,11 +132,11 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db.DBAppgPst(id, longURL)
+		err := db.DataBaseAPIPagePost(id, longURL)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.Flpst(id, longURL)
+		err = db.DataBaseFilePost(id, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -146,9 +148,9 @@ func apiPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func jsonPage(res http.ResponseWriter, req *http.Request) {
+func JSONPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		reader, err := xzpjsn(res, req)
+		reader, err := gzp.Xzpjsn(res, req)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the side")
@@ -176,7 +178,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DBAppgPst(shortURL, longURL)
+		err = db.DataBaseAPIPagePost(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -197,7 +199,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.Flpst(shortURL, longURL)
+		err = db.DataBaseFilePost(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -208,7 +210,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func run() error {
+func Run() error {
 	var cfg Config
 	err := env.Parse(&cfg)
 	flagRunAddr, vbn, fileName := parseFlags()
@@ -226,11 +228,11 @@ func run() error {
 		fileName = cfg.FileStoragePath
 	}
 	log.Println(cfg)
-	err = db.DBMnCf(flagRunAddr, vbn, fileName)
+	err = db.DataBaseCfg(flagRunAddr, vbn, fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = db.DBIns(fileName)
+	err = db.DataBaseInsert(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -238,10 +240,10 @@ func run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", vbn)
 	mux1 := mux.NewRouter()
-	mux1.HandleFunc(`/{id}`, WithLogging(apiHandler()))
-	mux1.HandleFunc(`/`, WithLogging(mainHandler()))
-	mux1.HandleFunc(`/api/shorten`, WithLogging(jsonHandler()))
-	return http.ListenAndServe(flagRunAddr, gzipHandle(mux1))
+	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
+	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
+	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
+	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
 func parseFlags() (a string, b string, f string) {
@@ -262,12 +264,12 @@ func parseFlags() (a string, b string, f string) {
 }
 
 func apiHandler() http.Handler {
-	fn := apiPage
+	fn := APIPage
 	return http.HandlerFunc(fn)
 }
 
 func mainHandler() http.Handler {
-	fn := mainPage
+	fn := MainPage
 	return http.HandlerFunc(fn)
 }
 
@@ -280,6 +282,6 @@ type Answ struct {
 }
 
 func jsonHandler() http.Handler {
-	fn := jsonPage
+	fn := JSONPage
 	return http.HandlerFunc(fn)
 }

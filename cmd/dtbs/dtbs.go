@@ -1,4 +1,4 @@
-package dtbs
+package databaseshortener
 
 import (
 	"database/sql"
@@ -50,10 +50,11 @@ func RunMigrateScripts(db *sql.DB) error {
 	return nil
 }
 
-func DBMainPageCfg() (a string, err error) {
+func DataBaseMainPageCfg() (vbn_ string, err error) {
 	var db *sql.DB
 	var vbn string
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", err
 	}
@@ -75,9 +76,10 @@ func DBMainPageCfg() (a string, err error) {
 	return vbn, nil
 }
 
-func DBAppgGt(id string) (a string, b int, err error) {
+func DatBaseAPIPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", 0, err
 	}
@@ -100,9 +102,10 @@ func DBAppgGt(id string) (a string, b int, err error) {
 	return longURL, 1, nil
 }
 
-func DBAppgPst(id string, longURL string) (err error) {
+func DataBaseAPIPagePost(id string, longURL string) (err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
 	}
@@ -115,9 +118,10 @@ func DBAppgPst(id string, longURL string) (err error) {
 	return nil
 }
 
-func DBMnCf(flagRunAddr string, vbn string, fileName string) (err error) {
+func DataBaseCfg(flagRunAddr string, vbn string, fileName string) (err error) {
 	//db, err := sql.Open("sqlite3", "shortlongurl.db")
-	db, err := NewDB("teeest.db")
+	dbName := "shortener.db"
+	db, err := NewDB(dbName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -138,9 +142,10 @@ func DBMnCf(flagRunAddr string, vbn string, fileName string) (err error) {
 	return nil
 }
 
-func DBIns(id string) (err error) {
+func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
 	}
@@ -181,10 +186,11 @@ func DBIns(id string) (err error) {
 	return nil
 }
 
-func DBFileNameCfg() (a string, err error) {
+func DataBaseFileNameCfg() (a string, err error) {
 	var db *sql.DB
 	var vbn string
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", err
 	}
@@ -205,9 +211,10 @@ func DBFileNameCfg() (a string, err error) {
 	}
 	return vbn, nil
 }
-func DBjsnpps(shortURL string, longURL string) (b int, err error) {
+func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", "teeest.db")
+	dbName := "shortener.db"
+	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return 0, err
 	}
@@ -230,8 +237,8 @@ func DBjsnpps(shortURL string, longURL string) (b int, err error) {
 	return id, nil
 }
 
-func Flpst(shortURL string, longURL string) (err error) {
-	fileName, err := DBFileNameCfg()
+func DataBaseFilePost(shortURL string, longURL string) (err error) {
+	fileName, err := DataBaseFileNameCfg()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -240,7 +247,7 @@ func Flpst(shortURL string, longURL string) (err error) {
 		log.Fatal(err)
 	}
 	defer Producer.Close()
-	id, err := DBjsnpps(shortURL, longURL)
+	id, err := DataBaseJSONPage(shortURL, longURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -251,3 +258,10 @@ func Flpst(shortURL string, longURL string) (err error) {
 	}
 	return nil
 }
+
+/*
+func DataBasePath(path string) (err error) {
+	db, err = sql.Open("sqlite3", "conf_db.db")
+
+}
+*/

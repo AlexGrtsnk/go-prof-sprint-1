@@ -1,4 +1,4 @@
-package main
+package gzp
 
 import (
 	"compress/gzip"
@@ -18,7 +18,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func gzipHandle(next http.Handler) http.Handler {
+func GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// проверяем, что клиент поддерживает gzip-сжатие
 		// это упрощённый пример. В реальном приложении следует проверять все
@@ -49,7 +49,7 @@ func gzipHandle(next http.Handler) http.Handler {
 	})
 }
 
-func xzpjsn(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err error) {
+func Xzpjsn(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err error) {
 	var reader io.Reader
 
 	if req.Header.Get(`Content-Encoding`) == `gzip` {

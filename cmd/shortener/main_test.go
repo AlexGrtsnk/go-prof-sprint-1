@@ -1,6 +1,7 @@
 package main
 
 import (
+	fun "go-prof-sprint-1/cmd/functions"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +34,7 @@ func TestMainPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080", nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			mainPage(w, request)
+			fun.MainPage(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
@@ -49,7 +50,7 @@ func TestMainPage(t *testing.T) {
 	}
 }
 
-func TestApiPage(t *testing.T) {
+func TestAPIPage(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -84,7 +85,7 @@ func TestApiPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			apiPage(w, request)
+			fun.APIPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
@@ -99,7 +100,7 @@ func TestApiPage(t *testing.T) {
 	}
 }
 
-func TestJsonPage(t *testing.T) {
+func TestJSONPage(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -134,7 +135,7 @@ func TestJsonPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			apiPage(w, request)
+			fun.APIPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
