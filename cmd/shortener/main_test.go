@@ -1,7 +1,7 @@
 package main
 
 import (
-	fun "go-prof-sprint-1/cmd/functions"
+	fun "go-prof-sprint-1/internal/functions"
 	"io"
 	"net/http"
 	"net/http/httptest"

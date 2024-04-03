@@ -1,4 +1,4 @@
-package fileworks
+package internal
 
 import (
 	"encoding/json"

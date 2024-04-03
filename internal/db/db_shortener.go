@@ -1,13 +1,13 @@
-package databaseshortener
+package internal
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
 
-	bn "go-prof-sprint-1/cmd/bindata"
+	bn "go-prof-sprint-1/internal/bindata"
 
-	flw "go-prof-sprint-1/cmd/flwrk"
+	flw "go-prof-sprint-1/internal/flwrk"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/sqlite3"
@@ -186,7 +186,7 @@ func DataBaseInsert(id string) (err error) {
 	return nil
 }
 
-func DataBaseFileNameCfg() (a string, err error) {
+func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
 	var vbn string
 	dbName := "shortener.db"
@@ -238,7 +238,7 @@ func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 }
 
 func DataBaseFilePost(shortURL string, longURL string) (err error) {
-	fileName, err := DataBaseFileNameCfg()
+	fileName, err := DataBaseFileNameSelect()
 	if err != nil {
 		log.Fatal(err)
 	}

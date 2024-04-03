@@ -1,4 +1,4 @@
-package functions
+package internal
 
 import (
 	"bytes"
@@ -10,9 +10,9 @@ import (
 	"math/rand"
 	"net/http"
 
-	db "go-prof-sprint-1/cmd/dtbs"
-	gzp "go-prof-sprint-1/cmd/gzp"
-	lg "go-prof-sprint-1/cmd/logger"
+	db "go-prof-sprint-1/internal/db"
+	gzp "go-prof-sprint-1/internal/gzp"
+	lg "go-prof-sprint-1/internal/logger"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/gorilla/mux"

@@ -1,4 +1,4 @@
-package gzp
+package internal
 
 import (
 	"compress/gzip"

@@ -1,4 +1,4 @@
-package log
+package internal
 
 import (
 	"net/http"

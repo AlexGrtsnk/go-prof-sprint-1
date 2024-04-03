@@ -3,7 +3,7 @@
 // 000001_init_mg.down.sql (265B)
 // 000001_init_mg.up.sql (265B)
 
-package bindata
+package internal
 
 import (
 	"bytes"
