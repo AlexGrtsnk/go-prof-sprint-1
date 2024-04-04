@@ -49,7 +49,7 @@ func GzipHandle(next http.Handler) http.Handler {
 	})
 }
 
-func Xzpjsn(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err error) {
+func GzipFormatHandlerJSON(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err error) {
 	var reader io.Reader
 
 	if req.Header.Get(`Content-Encoding`) == `gzip` {
@@ -58,8 +58,9 @@ func Xzpjsn(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err 
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return reader, err
 		}
-		reader = gz
 		defer gz.Close()
+		reader = gz
+
 	} else {
 		reader = req.Body
 	}

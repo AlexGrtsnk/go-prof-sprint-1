@@ -1,4 +1,4 @@
-package internal
+package databaseshortener
 
 import (
 	"database/sql"
@@ -7,7 +7,7 @@ import (
 
 	bn "go-prof-sprint-1/internal/bindata"
 
-	flw "go-prof-sprint-1/internal/flwrk"
+	flw "go-prof-sprint-1/internal/json_parser"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/sqlite3"
@@ -15,6 +15,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 )
+
+const dbName = "shortener.db"
 
 func NewDB(dbPath string) (*sql.DB, error) {
 	sqliteDB, err := sql.Open("sqlite3", dbPath)
@@ -50,16 +52,15 @@ func RunMigrateScripts(db *sql.DB) error {
 	return nil
 }
 
-func DataBaseMainPageCfg() (vbn_ string, err error) {
+func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	var db *sql.DB
-	var vbn string
-	dbName := "shortener.db"
+	var apiRunAddr string
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", err
 	}
 	defer db.Close()
-	quer := "SELECT vbn FROM cfg WHERE id = 1;"
+	quer := "SELECT apiRunAddr FROM cfg WHERE id = 1;"
 	rows, err := db.Query(quer)
 	if err != nil {
 		return "", err
@@ -69,16 +70,15 @@ func DataBaseMainPageCfg() (vbn_ string, err error) {
 		return "", rows.Err()
 	}
 	rows.Next()
-	err = rows.Scan(&vbn)
+	err = rows.Scan(&apiRunAddr)
 	if err != nil {
 		return "", err
 	}
-	return vbn, nil
+	return apiRunAddr, nil
 }
 
-func DatBaseAPIPageGet(id string) (longURL_ string, flag int, err error) {
+func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
-	dbName := "shortener.db"
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", 0, err
@@ -102,9 +102,8 @@ func DatBaseAPIPageGet(id string) (longURL_ string, flag int, err error) {
 	return longURL, 1, nil
 }
 
-func DataBaseAPIPagePost(id string, longURL string) (err error) {
+func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 	var db *sql.DB
-	dbName := "shortener.db"
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
@@ -118,9 +117,7 @@ func DataBaseAPIPagePost(id string, longURL string) (err error) {
 	return nil
 }
 
-func DataBaseCfg(flagRunAddr string, vbn string, fileName string) (err error) {
-	//db, err := sql.Open("sqlite3", "shortlongurl.db")
-	dbName := "shortener.db"
+func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
 	db, err := NewDB(dbName)
 	if err != nil {
 		log.Fatal(err)
@@ -133,7 +130,7 @@ func DataBaseCfg(flagRunAddr string, vbn string, fileName string) (err error) {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	quer := `INSERT INTO cfg(flagRunAddr, vbn, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(vbn) + `', '` + fileName + `');`
+	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `');`
 	_, err = db.Exec(quer)
 
 	if err != nil {
@@ -144,7 +141,6 @@ func DataBaseCfg(flagRunAddr string, vbn string, fileName string) (err error) {
 
 func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
-	dbName := "shortener.db"
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
@@ -188,8 +184,7 @@ func DataBaseInsert(id string) (err error) {
 
 func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
-	var vbn string
-	dbName := "shortener.db"
+	var apiRunAddr string
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return "", err
@@ -205,15 +200,15 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 		return "", rows.Err()
 	}
 	rows.Next()
-	err = rows.Scan(&vbn)
+	err = rows.Scan(&apiRunAddr)
 	if err != nil {
 		return "", err
 	}
-	return vbn, nil
+	return apiRunAddr, nil
 }
 func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var db *sql.DB
-	dbName := "shortener.db"
+
 	db, err = sql.Open("sqlite3", dbName)
 	if err != nil {
 		return 0, err
@@ -258,10 +253,3 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 	}
 	return nil
 }
-
-/*
-func DataBasePath(path string) (err error) {
-	db, err = sql.Open("sqlite3", "conf_db.db")
-
-}
-*/

@@ -3,7 +3,7 @@ module go-prof-sprint-1
 go 1.21.3
 
 require (
-	github.com/caarlos0/env/v6 v6.10.1
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.22

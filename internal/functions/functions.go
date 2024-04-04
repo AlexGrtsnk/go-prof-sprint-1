@@ -3,28 +3,21 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 
+	apcfg "go-prof-sprint-1/internal/app_config"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
 	lg "go-prof-sprint-1/internal/logger"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-type Config struct {
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	Home            string `env:"HOME"`
-	serverAddress   string `env:"serverAddress"`
-	baseURL         string `env:"baseURL"`
-}
 
 func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -37,8 +30,8 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
-func MainPage(w http.ResponseWriter, r *http.Request) {
-	vbn, err := db.DataBaseMainPageCfg()
+func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
+	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -46,7 +39,7 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
-	reader, err := gzp.Xzpjsn(w, r)
+	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -55,11 +48,11 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if r.Method == http.MethodPost {
-		a, err := io.ReadAll(reader)
+		rReader, err := io.ReadAll(reader)
 		if err != nil {
 			log.Fatal(err)
 		}
-		longURL := string(a)
+		longURL := string(rReader)
 		if longURL == "" {
 			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
 		}
@@ -70,21 +63,22 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		if shortURL != "" {
-			resp, err := http.Post(vbn+"/"+string(shortURL), "text/plain", b)
+			resp, err := http.Post(apiRunAddr+"/"+string(shortURL), "text/plain", b)
 			if err != nil {
 				return
 			}
 			defer resp.Body.Close()
 			w.WriteHeader(http.StatusCreated)
-			_, err = io.WriteString(w, vbn+"/"+shortURL)
+			_, err = io.WriteString(w, apiRunAddr+"/"+shortURL)
 			if err != nil {
-				log.Fatal(err)
+				w.WriteHeader(http.StatusBadRequest)
 			}
 		} else {
 			http.Error(w, "cant create short url", http.StatusBadRequest)
 		}
 		return
-	} else {
+	}
+	if r.Method == http.MethodGet {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "No get method allowed")
 		if err != nil {
@@ -93,7 +87,7 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIPage(res http.ResponseWriter, req *http.Request) {
+func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -105,7 +99,7 @@ func APIPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		longURL, flag, err := db.DatBaseAPIPageGet(id)
+		longURL, flag, err := db.DatBaseDownloadFullURLPageGet(id)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -132,7 +126,7 @@ func APIPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db.DataBaseAPIPagePost(id, longURL)
+		err := db.DataBaseDownloadFullURLPagePost(id, longURL)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -150,7 +144,7 @@ func APIPage(res http.ResponseWriter, req *http.Request) {
 
 func JSONPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		reader, err := gzp.Xzpjsn(res, req)
+		reader, err := gzp.GzipFormatHandlerJSON(res, req)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the side")
@@ -159,7 +153,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		var ques Ques
+		var ques Question
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
@@ -178,7 +172,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DataBaseAPIPagePost(shortURL, longURL)
+		err = db.DataBaseDownloadFullURLPagePost(shortURL, longURL)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -186,7 +180,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		var answ Answ
+		var answ Answer
 		answ.Result = "http://localhost:8080/" + shortURL
 		resp, err := json.Marshal(answ)
 		if err != nil {
@@ -211,24 +205,24 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func Run() error {
-	var cfg Config
+	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, vbn, fileName := parseFlags()
+	flagRunAddr, apiRunAddr, fileName := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if cfg.serverAddress != "" {
+	if cfg.ServerAddress != "" {
 		flagRunAddr = "8080"
 	}
-	if cfg.baseURL != "" {
-		vbn = cfg.baseURL
+	if cfg.BaseURL != "" {
+		apiRunAddr = cfg.BaseURL
 	}
 	if cfg.FileStoragePath != "" {
 		fileName = cfg.FileStoragePath
 	}
 	log.Println(cfg)
-	err = db.DataBaseCfg(flagRunAddr, vbn, fileName)
+	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -238,7 +232,7 @@ func Run() error {
 	}
 	fmt.Println("where db is held", fileName)
 	fmt.Println("Running server on", flagRunAddr)
-	fmt.Println("Running api on", vbn)
+	fmt.Println("Running api on", apiRunAddr)
 	mux1 := mux.NewRouter()
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
@@ -246,38 +240,21 @@ func Run() error {
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
-func parseFlags() (a string, b string, f string) {
-	var flagRunAddr string
-	var vbn string
-	var fileName string
-	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
-	flag.StringVar(&vbn, "b", "http://localhost:8080", "api page existance url adress")
-	flag.StringVar(&fileName, "f", "text.txt", "txt file with short and long urls")
-	flag.Parse()
-	if flagRunAddr != "localhost:8080" && vbn == "http://localhost:8080" {
-		vbn = "http://" + flagRunAddr
-	}
-	if flagRunAddr == "localhost:8080" && vbn != "http://localhost:8080" {
-		flagRunAddr = vbn[7:]
-	}
-	return flagRunAddr, vbn, fileName
-}
-
 func apiHandler() http.Handler {
-	fn := APIPage
+	fn := DownloadFullURLPage
 	return http.HandlerFunc(fn)
 }
 
 func mainHandler() http.Handler {
-	fn := MainPage
+	fn := CreateShortURLPage
 	return http.HandlerFunc(fn)
 }
 
-type Ques struct {
+type Question struct {
 	LongURL string `json:"url"`
 }
 
-type Answ struct {
+type Answer struct {
 	Result string `json:"result"`
 }
 

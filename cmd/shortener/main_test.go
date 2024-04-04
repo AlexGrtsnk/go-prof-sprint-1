@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMainPage(t *testing.T) {
+func TestCreateShortURLPage(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -34,7 +34,7 @@ func TestMainPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080", nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			fun.MainPage(w, request)
+			fun.CreateShortURLPage(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
@@ -50,7 +50,7 @@ func TestMainPage(t *testing.T) {
 	}
 }
 
-func TestAPIPage(t *testing.T) {
+func TestDownloadFullURLPage(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -85,7 +85,7 @@ func TestAPIPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			fun.APIPage(w, request)
+			fun.DownloadFullURLPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
@@ -135,7 +135,7 @@ func TestJSONPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			fun.APIPage(w, request)
+			fun.DownloadFullURLPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)

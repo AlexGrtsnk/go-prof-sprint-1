@@ -1,6 +1,8 @@
-package internal
+package logger
 
 import (
+	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -10,7 +12,14 @@ import (
 func WithLogging(h http.Handler) func(w http.ResponseWriter, r *http.Request) {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		panic(err)
+		logEr := func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the logger side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		return logEr
 	}
 	sugar := *logger.Sugar()
 	logFn := func(w http.ResponseWriter, r *http.Request) {
