@@ -80,7 +80,7 @@ func RunMigrateScripts(db *sql.DB) error {
 func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return "", err
 	}
@@ -108,7 +108,7 @@ func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 
 func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return "", 0, err
 	}
@@ -137,7 +137,7 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 
 func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 	var db *sql.DB
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func DataBasePing(dbbname string, driver string) (err error) {
 
 func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func DataBaseInsert(id string) (err error) {
 func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return "", err
 	}
@@ -275,7 +275,7 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 }
 func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var db *sql.DB
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return 0, err
 	}
@@ -327,7 +327,7 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 
 func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err error) {
 	var db *sql.DB
-	dbms, dbName, err := DataBaseSelfConfigGet()
+	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return "", 0, err
 	}
@@ -355,7 +355,7 @@ func DataBaseStartConfig(dbName string) (err error) {
 	}
 	defer db.Close()
 	var driver string
-	if dbbName != "localhost" {
+	if dbName != "localhost" {
 		driver = "pgx"
 	} else {
 		driver = "sqlite3"
