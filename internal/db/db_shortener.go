@@ -19,15 +19,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var dbName = "shortenerdbs.db"
-var dbms = "sqlite3"
-var OldName = "None"
+const drriver = "sqlite3"
+const dbbName = "shortenerdbs.db"
 
-const driver = "sqlite3"
-const dbbbname = "shortenerdbs.db"
-
-func NewDB(dbPath string) (*sql.DB, error) {
-	sqliteDB, err := sql.Open(dbms, dbPath)
+func NewDB() (*sql.DB, error) {
+	dbname, driverTemp, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return nil, err
+	}
+	sqliteDB, err := sql.Open(driverTemp, dbname)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open sqlite DB")
 	}
@@ -38,7 +38,11 @@ func NewDB(dbPath string) (*sql.DB, error) {
 func RunMigrateScripts(db *sql.DB) error {
 	var driver database.Driver
 	var err error
-	if OldName == "None" {
+	dbNameTemp, _, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+	if dbNameTemp == dbbName {
 		driver, err = sqlite3.WithInstance(db, &sqlite3.Config{})
 	} else {
 		driver, err = postgres.WithInstance(db, &postgres.Config{})
@@ -53,11 +57,11 @@ func RunMigrateScripts(db *sql.DB) error {
 		})
 
 	d, _ := bindata.WithInstance(res)
-	m, err := migrate.NewWithInstance("go-bindata", d, dbms, driver)
+	m, err := migrate.NewWithInstance("go-bindata", d, dbNameTemp, driver)
 	if err != nil {
 		return fmt.Errorf("initializing db migration failed %s", err)
 	}
-	if dbName == "shortenerdbs.db" {
+	if dbNameTemp == dbbName {
 		_ = m.Steps(-1)
 		err = m.Steps(1)
 		if err != nil && err != migrate.ErrNoChange {
@@ -76,6 +80,10 @@ func RunMigrateScripts(db *sql.DB) error {
 func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", err
@@ -100,6 +108,10 @@ func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 
 func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", 0, err
+	}
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", 0, err
@@ -125,6 +137,10 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 
 func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 	var db *sql.DB
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return err
@@ -139,7 +155,7 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 }
 
 func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
-	db, err := NewDB(dbName)
+	db, err := NewDB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -158,32 +174,16 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 	return nil
 }
 func DataBasePingHandler() (err error) {
-	if OldName == "bad" {
-		return errors.Errorf("fiasko brat")
-	}
-	if OldName == "good" {
-		return nil
-	}
-	dbNameTemp, driverTemp, err := DataBaseSelfConfigGet()
+	_, driverTemp, err := DataBaseSelfConfigGet()
 	if err != nil {
 		return err
 	}
-	temp := dbName
-	fmt.Println(dbNameTemp)
-	dbName = fmt.Sprintf("host=%s port=%s  user=%s password=%s dbname=%s sslmode=disable",
+	dbName := fmt.Sprintf("host=%s port=%s  user=%s password=%s dbname=%s sslmode=disable",
 		`postgres`, `5432`, `postgres`, `postgres`, `praktikum`)
-	dbms = "pgx"
-	err = DataBasePing(dbNameTemp, driverTemp)
+	err = DataBasePing(dbName, driverTemp)
 	if err != nil {
-		//quer := "UPDATE cfg SET dbbname='" + dbNameTemp + "', '" + "driver='" + driverTemp + "' WHERE id=1;"
-		DataBaseSelfConfigUpdate(dbbbname, driver)
-		dbName = temp
-		dbms = "sqlite3"
-		OldName = "bad"
+		DataBaseSelfConfigUpdate(dbbName, drriver)
 		return err
-	} else {
-		DataBaseSelfConfigUpdate(dbNameTemp, driverTemp)
-		OldName = "good"
 	}
 	return nil
 }
@@ -215,6 +215,11 @@ func DataBasePing(dbbname string, driver string) (err error) {
 
 func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return err
@@ -242,6 +247,11 @@ func DataBaseInsert(id string) (err error) {
 func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
+
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", err
@@ -265,6 +275,10 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 }
 func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var db *sql.DB
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return 0, err
+	}
 
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {
@@ -313,6 +327,10 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 
 func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err error) {
 	var db *sql.DB
+	dbms, dbName, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", 0, err
+	}
 
 	db, err = sql.Open(dbms, dbName)
 	if err != nil {

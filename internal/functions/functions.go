@@ -154,16 +154,16 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		if db.OldName != "" {
-			err = db.DataBaseFilePost(id, longURL)
+		//if db.OldName != "" {
+		err = db.DataBaseFilePost(id, longURL)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
 			if err != nil {
-				res.WriteHeader(http.StatusBadRequest)
-				_, err = io.WriteString(res, "Error on the database side")
-				if err != nil {
-					log.Fatal(err)
-				}
+				log.Fatal(err)
 			}
 		}
+		//}
 	}
 }
 
