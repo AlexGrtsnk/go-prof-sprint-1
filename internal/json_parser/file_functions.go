@@ -16,6 +16,12 @@ type Producer struct {
 	encoder *json.Encoder
 }
 
+type ProduceURL struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+type ProduceList []ProduceURL
+
 func NewProducer(fileName string) (*Producer, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

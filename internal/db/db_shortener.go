@@ -7,19 +7,27 @@ import (
 
 	bn "go-prof-sprint-1/internal/bindata"
 
-	flw "go-prof-sprint-1/internal/json_parser"
+	Flw "go-prof-sprint-1/internal/json_parser"
 
 	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database"
+	"github.com/golang-migrate/migrate/database/postgres"
 	"github.com/golang-migrate/migrate/database/sqlite3"
 	bindata "github.com/golang-migrate/migrate/source/go_bindata"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 )
 
-const dbName = "shortener.db"
+const drriver = "sqlite3"
+const dbbName = "shortenerdbs.db"
 
-func NewDB(dbPath string) (*sql.DB, error) {
-	sqliteDB, err := sql.Open("sqlite3", dbPath)
+func NewDB() (*sql.DB, error) {
+	dbname, driverTemp, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return nil, err
+	}
+	sqliteDB, err := sql.Open(driverTemp, dbname)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open sqlite DB")
 	}
@@ -28,9 +36,19 @@ func NewDB(dbPath string) (*sql.DB, error) {
 }
 
 func RunMigrateScripts(db *sql.DB) error {
-	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+	var driver database.Driver
+	var err error
+	dbNameTemp, _, err := DataBaseSelfConfigGet()
 	if err != nil {
-		return fmt.Errorf("creating sqlite3 db driver failed %s", err)
+		return err
+	}
+	if dbNameTemp == dbbName {
+		driver, err = sqlite3.WithInstance(db, &sqlite3.Config{})
+	} else {
+		driver, err = postgres.WithInstance(db, &postgres.Config{})
+	}
+	if err != nil {
+		return fmt.Errorf("creating db driver failed %s", err)
 	}
 
 	res := bindata.Resource(bn.AssetNames(),
@@ -39,23 +57,34 @@ func RunMigrateScripts(db *sql.DB) error {
 		})
 
 	d, _ := bindata.WithInstance(res)
-	m, err := migrate.NewWithInstance("go-bindata", d, "sqlite3", driver)
+	m, err := migrate.NewWithInstance("go-bindata", d, dbNameTemp, driver)
 	if err != nil {
 		return fmt.Errorf("initializing db migration failed %s", err)
 	}
-	_ = m.Down()
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("migrating database failed %s", err)
+	if dbNameTemp == dbbName {
+		_ = m.Steps(-1)
+		err = m.Steps(1)
+		if err != nil && err != migrate.ErrNoChange {
+			return fmt.Errorf("migrating database failed %s", err)
+		}
+	} else {
+		_ = m.Down()
+		err = m.Up()
+		if err != nil && err != migrate.ErrNoChange {
+			return fmt.Errorf("migrating database failed %s", err)
+		}
 	}
-
 	return nil
 }
 
 func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
-	db, err = sql.Open("sqlite3", dbName)
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +108,11 @@ func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 
 func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", dbName)
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", 0, err
+	}
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", 0, err
 	}
@@ -104,7 +137,11 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 
 func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", dbName)
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return err
 	}
@@ -118,21 +155,61 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 }
 
 func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
-	db, err := NewDB(dbName)
+	db, err := NewDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer db.Close()
-
 	err = RunMigrateScripts(db)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `');`
+	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
 	_, err = db.Exec(quer)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func DataBasePingHandler() (err error) {
+	_, driverTemp, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+	dbName := fmt.Sprintf("host=%s port=%s  user=%s password=%s dbname=%s sslmode=disable",
+		`postgres`, `5432`, `postgres`, `postgres`, `praktikum`)
+	err = DataBasePing(dbName, driverTemp)
+	if err != nil {
+		err = DataBaseSelfConfigUpdate(dbbName, drriver)
+		if err != nil {
+			return err
+		}
+		return err
+	}
+	return nil
+}
 
+func DataBasePing(dbbname string, driver string) (err error) {
+	var db *sql.DB
+	var res string
+	db, err = sql.Open(driver, dbbname)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	quer := "SELECT 1;"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&res)
 	if err != nil {
 		return err
 	}
@@ -141,43 +218,31 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 
 func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
-	db, err = sql.Open("sqlite3", dbName)
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	Consumer, err := flw.NewConsumer(id)
+	Consumer, err := Flw.NewConsumer(id)
 	if err != nil {
 		return nil
 	}
-	var eventTable []flw.Event
-	flag := 0
 	for {
 		readEvent, err_ := Consumer.ReadEvent()
 		if err_ != nil {
 			break
 		}
-		eventTable = append(eventTable, *readEvent)
-		flag = 1
-
-	}
-	if flag == 1 {
-		sqlStr := "INSERT INTO short_longURL(id, short_url, longURL) VALUES "
-		vals := []interface{}{}
-
-		for _, row := range eventTable {
-			sqlStr += "(?, ?, ?),"
-			vals = append(vals, row.ID, row.ShortURL, row.LongURL)
-		}
-		sqlStr = sqlStr[0 : len(sqlStr)-1]
-		stmt, err := db.Prepare(sqlStr)
+		quer := `INSERT INTO short_longURL(short_url, longURL) VALUES ('` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `');`
+		_, err = db.Exec(quer)
 		if err != nil {
 			return err
 		}
-		_, err = stmt.Exec(vals...)
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
@@ -185,7 +250,12 @@ func DataBaseInsert(id string) (err error) {
 func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
-	db, err = sql.Open("sqlite3", dbName)
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
+
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return "", err
 	}
@@ -208,8 +278,12 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 }
 func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return 0, err
+	}
 
-	db, err = sql.Open("sqlite3", dbName)
+	db, err = sql.Open(dbms, dbName)
 	if err != nil {
 		return 0, err
 	}
@@ -237,7 +311,7 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	Producer, err := flw.NewProducer(fileName)
+	Producer, err := Flw.NewProducer(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -246,10 +320,112 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var events = []*flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
+	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
 		log.Fatal(err)
+	}
+	return nil
+}
+
+func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", 0, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return "", 0, err
+	}
+	defer db.Close()
+	var shoortURL string
+	if err := db.QueryRow("SELECT short_url FROM short_longURL WHERE longURL = '" + string(longURL) + "';").Scan(&shoortURL); err != nil {
+		if err == sql.ErrNoRows {
+			return "", 0, nil
+		}
+		return "", 0, err
+	}
+	return shoortURL, 1, nil
+}
+
+func DataBaseStartConfig(dbName string) (err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	var driver string
+	if dbName != "localhost" {
+		driver = "pgx"
+	} else {
+		driver = "sqlite3"
+		dbName = dbbName
+	}
+	sts1 := `
+	DROP TABLE IF EXISTS cfg;
+	CREATE TABLE cfg (id INTEGER PRIMARY KEY, dbbname TEXT, driver TEXT);
+	INSERT INTO cfg(dbbname, driver) VALUES ('` + string(dbName) + `', '` + string(driver) + `');`
+	_, err = db.Exec(sts1)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DataBaseSelfConfigGet() (dbbname string, driver string, err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return "", "", err
+	}
+	quer := "SELECT dbbname FROM cfg WHERE id = 1;"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return "", "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", "", rows.Err()
+	}
+	rows.Next()
+	var dbNameTemp string
+	err = rows.Scan(&dbNameTemp)
+	if err != nil {
+		return "", "", err
+	}
+	quer = "SELECT driver FROM cfg WHERE id = 1;"
+	rows, err = db.Query(quer)
+	if err != nil {
+		return "", "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", "", rows.Err()
+	}
+	rows.Next()
+	var driverTemp string
+	err = rows.Scan(&driverTemp)
+	if err != nil {
+		return "", "", err
+	}
+	return dbNameTemp, driverTemp, nil
+}
+func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	quer := "UPDATE cfg SET dbbname='" + dbbname + "', '" + "driver='" + driver + "' WHERE id=1;"
+	_, err = db.Exec(quer)
+
+	if err != nil {
+		return err
 	}
 	return nil
 }
