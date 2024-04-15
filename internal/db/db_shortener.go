@@ -347,7 +347,7 @@ func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err e
 	return shoortURL, 1, nil
 }
 
-func DataBaseStartConfig(dbbName string) (err error) {
+func DataBaseStartConfig(dbName string) (err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "cfg.db")
 	if err != nil {
@@ -359,11 +359,12 @@ func DataBaseStartConfig(dbbName string) (err error) {
 		driver = "pgx"
 	} else {
 		driver = "sqlite3"
+		dbName = dbbName
 	}
 	sts1 := `
 	DROP TABLE IF EXISTS cfg;
 	CREATE TABLE cfg (id INTEGER PRIMARY KEY, dbbname TEXT, driver TEXT);
-	INSERT INTO cfg(dbbname, driver) VALUES ('` + string(dbbName) + `', '` + string(driver) + `');`
+	INSERT INTO cfg(dbbname, driver) VALUES ('` + string(dbName) + `', '` + string(driver) + `');`
 	_, err = db.Exec(sts1)
 
 	if err != nil {
