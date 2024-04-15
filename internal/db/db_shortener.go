@@ -182,7 +182,10 @@ func DataBasePingHandler() (err error) {
 		`postgres`, `5432`, `postgres`, `postgres`, `praktikum`)
 	err = DataBasePing(dbName, driverTemp)
 	if err != nil {
-		DataBaseSelfConfigUpdate(dbbName, drriver)
+		err = DataBaseSelfConfigUpdate(dbbName, drriver)
+		if err != nil {
+			return err
+		}
 		return err
 	}
 	return nil

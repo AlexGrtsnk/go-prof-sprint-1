@@ -375,18 +375,12 @@ func Run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a, b, err := db.DataBaseSelfConfigGet()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("dasddasd ", a, b)
 	if databaseDSN != "localhost" {
 		err = db.DataBasePingHandler()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-	fmt.Println("dasddasd213123 ", a, b)
 	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
 	if err != nil {
 		log.Fatal(err)
@@ -395,9 +389,6 @@ func Run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//apiiRunAddr, _ := db.DataBaseCreateShortURLPageCfg()
-	//err = db.DataBaseDownloadFullURLPagePost("aaa", "bb")
-	//fmt.Println("cdjkdcn:" + string(err.Error()))
 	fmt.Println("where postgres is hosted:", databaseDSN)
 	fmt.Println("where db is held", fileName)
 	fmt.Println("Running server on", flagRunAddr)
