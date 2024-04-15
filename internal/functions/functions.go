@@ -263,7 +263,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 
 func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		err := db.DataBasePingHandler("None")
+		err := db.DataBasePingHandler()
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			_, err = io.WriteString(res, "cannot open psql database, using old realization")
@@ -371,12 +371,22 @@ func Run() error {
 		databaseDSN = cfg.DatabaseDSN
 	}
 	log.Println(cfg)
+	err = db.DataBaseStartConfig(databaseDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a, b, err := db.DataBaseSelfConfigGet()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("dasddasd ", a, b)
 	if databaseDSN != "localhost" {
-		err = db.DataBasePingHandler(databaseDSN)
+		err = db.DataBasePingHandler()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
+	fmt.Println("dasddasd213123 ", a, b)
 	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
 	if err != nil {
 		log.Fatal(err)

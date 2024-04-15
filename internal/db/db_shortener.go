@@ -23,6 +23,9 @@ var dbName = "shortenerdbs.db"
 var dbms = "sqlite3"
 var OldName = "None"
 
+const driver = "sqlite3"
+const dbbbname = "shortenerdbs.db"
+
 func NewDB(dbPath string) (*sql.DB, error) {
 	sqliteDB, err := sql.Open(dbms, dbPath)
 	if err != nil {
@@ -154,34 +157,41 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 	}
 	return nil
 }
-func DataBasePingHandler(dbbName string) (err error) {
+func DataBasePingHandler() (err error) {
 	if OldName == "bad" {
 		return errors.Errorf("fiasko brat")
 	}
 	if OldName == "good" {
 		return nil
 	}
+	dbNameTemp, driverTemp, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
 	temp := dbName
-	fmt.Println(dbbName)
+	fmt.Println(dbNameTemp)
 	dbName = fmt.Sprintf("host=%s port=%s  user=%s password=%s dbname=%s sslmode=disable",
 		`postgres`, `5432`, `postgres`, `postgres`, `praktikum`)
 	dbms = "pgx"
-	err = DataBasePing()
+	err = DataBasePing(dbNameTemp, driverTemp)
 	if err != nil {
+		//quer := "UPDATE cfg SET dbbname='" + dbNameTemp + "', '" + "driver='" + driverTemp + "' WHERE id=1;"
+		DataBaseSelfConfigUpdate(dbbbname, driver)
 		dbName = temp
 		dbms = "sqlite3"
 		OldName = "bad"
 		return err
 	} else {
+		DataBaseSelfConfigUpdate(dbNameTemp, driverTemp)
 		OldName = "good"
 	}
 	return nil
 }
 
-func DataBasePing() (err error) {
+func DataBasePing(dbbname string, driver string) (err error) {
 	var db *sql.DB
 	var res string
-	db, err = sql.Open(dbms, dbName)
+	db, err = sql.Open(driver, dbbname)
 	if err != nil {
 		return err
 	}
@@ -274,7 +284,7 @@ func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	var id int
 	err = rows.Scan(&id)
 	if err != nil {
-		fmt.Println("dsw")
+		return 0, err
 	}
 	return id, nil
 }
@@ -317,4 +327,83 @@ func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err e
 		return "", 0, err
 	}
 	return shoortURL, 1, nil
+}
+
+func DataBaseStartConfig(dbbName string) (err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	var driver string
+	if dbbName != "localhost" {
+		driver = "pgx"
+	} else {
+		driver = "sqlite3"
+	}
+	sts1 := `
+	DROP TABLE IF EXISTS cfg;
+	CREATE TABLE cfg (id INTEGER PRIMARY KEY, dbbname TEXT, driver TEXT);
+	INSERT INTO cfg(dbbname, driver) VALUES ('` + string(dbbName) + `', '` + string(driver) + `');`
+	_, err = db.Exec(sts1)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DataBaseSelfConfigGet() (dbbname string, driver string, err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return "", "", err
+	}
+	quer := "SELECT dbbname FROM cfg WHERE id = 1;"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return "", "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", "", rows.Err()
+	}
+	rows.Next()
+	var dbNameTemp string
+	err = rows.Scan(&dbNameTemp)
+	if err != nil {
+		return "", "", err
+	}
+	quer = "SELECT driver FROM cfg WHERE id = 1;"
+	rows, err = db.Query(quer)
+	if err != nil {
+		return "", "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", "", rows.Err()
+	}
+	rows.Next()
+	var driverTemp string
+	err = rows.Scan(&driverTemp)
+	if err != nil {
+		return "", "", err
+	}
+	return dbNameTemp, driverTemp, nil
+}
+func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
+	var db *sql.DB
+	db, err = sql.Open("sqlite3", "cfg.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	quer := "UPDATE cfg SET dbbname='" + dbbname + "', '" + "driver='" + driver + "' WHERE id=1;"
+	_, err = db.Exec(quer)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
