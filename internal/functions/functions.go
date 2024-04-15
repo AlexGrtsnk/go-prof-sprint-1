@@ -12,6 +12,7 @@ import (
 	apcfg "go-prof-sprint-1/internal/app_config"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
+	Flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
 	"github.com/caarlos0/env"
@@ -55,6 +56,22 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		longURL := string(rReader)
 		if longURL == "" {
 			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
+		}
+		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if flag == 1 {
+			w.WriteHeader(http.StatusConflict)
+			_, err = io.WriteString(w, apiRunAddr+"/"+string(shoortURL))
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			return
 		}
 		shortURL := generateShortKey()
 		b := new(bytes.Buffer)
@@ -101,6 +118,9 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 		longURL, flag, err := db.DatBaseDownloadFullURLPageGet(id)
 		if err != nil {
+			if id == "ping" {
+				return
+			}
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
 			if err != nil {
@@ -128,22 +148,35 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		id := vars["id"]
 		err := db.DataBaseDownloadFullURLPagePost(id, longURL)
 		if err != nil {
-			log.Fatal(err)
-		}
-		err = db.DataBaseFilePost(id, longURL)
-		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
-
+		if db.OldName != "" {
+			err = db.DataBaseFilePost(id, longURL)
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the database side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
 	}
 }
 
 func JSONPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
+		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -165,7 +198,31 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		longURL := ques.LongURL
+		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if flag == 1 {
+			var answ Answer
+			answ.Result = apiRunAddr + "/" + shoortURL
+			resp, err := json.Marshal(answ)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			res.Header().Set("Content-Type", "application/json")
+			res.WriteHeader(http.StatusConflict)
+			_, err = res.Write(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
 
+			return
+		}
 		shortURL := generateShortKey()
 		b := new(bytes.Buffer)
 		_, err = io.WriteString(b, longURL)
@@ -181,7 +238,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 		var answ Answer
-		answ.Result = "http://localhost:8080/" + shortURL
+		answ.Result = apiRunAddr + "/" + shortURL
 		resp, err := json.Marshal(answ)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -204,10 +261,99 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		err := db.DataBasePingHandler("None")
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			_, err = io.WriteString(res, "cannot open psql database, using old realization")
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			res.WriteHeader(http.StatusOK)
+			_, err = io.WriteString(res, "connection went good, using psql databse")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+}
+func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+
+		reader, err := gzp.GzipFormatHandlerJSON(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		var newProduceItems Flw.ProduceList
+		var buf bytes.Buffer
+		_, err = buf.ReadFrom(reader)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err = json.Unmarshal(buf.Bytes(), &newProduceItems); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		var tempItems []AnswerBatch
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
+		for idx, produceItem := range newProduceItems {
+			if len(produceItem.OriginalURL) <= 0 {
+				errMsg := fmt.Sprintf("Item %d: Incorrect produce code sequence or product name. Example code sequence: A12T-4GH7-QPL9-3N4M", idx)
+				http.Error(res, errMsg, http.StatusBadRequest)
+				return
+			} else {
+				shortURL := generateShortKey()
+				err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL)
+				if err != nil {
+					res.WriteHeader(http.StatusBadRequest)
+					_, err = io.WriteString(res, "Error on the database side")
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+				var answ AnswerBatch
+				answ.CorrelationID = produceItem.CorrelationID
+				answ.ShortURL = apiRunAddr + "/" + shortURL
+				tempItems = append(tempItems, answ)
+				err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL)
+				if err != nil {
+					res.WriteHeader(http.StatusBadRequest)
+					_, err = io.WriteString(res, "Error on the database side")
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+
+			}
+		}
+		res.Header().Set("Content-Type", "application/json")
+		if err = json.NewEncoder(res).Encode(tempItems); err != nil {
+			log.Panic(err)
+		}
+	}
+}
+
 func Run() error {
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -221,7 +367,16 @@ func Run() error {
 	if cfg.FileStoragePath != "" {
 		fileName = cfg.FileStoragePath
 	}
+	if cfg.DatabaseDSN != "" {
+		databaseDSN = cfg.DatabaseDSN
+	}
 	log.Println(cfg)
+	if databaseDSN != "localhost" {
+		err = db.DataBasePingHandler(databaseDSN)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
 	if err != nil {
 		log.Fatal(err)
@@ -230,6 +385,10 @@ func Run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//apiiRunAddr, _ := db.DataBaseCreateShortURLPageCfg()
+	//err = db.DataBaseDownloadFullURLPagePost("aaa", "bb")
+	//fmt.Println("cdjkdcn:" + string(err.Error()))
+	fmt.Println("where postgres is hosted:", databaseDSN)
 	fmt.Println("where db is held", fileName)
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
@@ -237,6 +396,8 @@ func Run() error {
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
+	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
+	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
@@ -258,7 +419,22 @@ type Answer struct {
 	Result string `json:"result"`
 }
 
+type AnswerBatch struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
 func jsonHandler() http.Handler {
 	fn := JSONPage
+	return http.HandlerFunc(fn)
+}
+
+func pingHandler() http.Handler {
+	fn := PingDataBasePage
+	return http.HandlerFunc(fn)
+}
+
+func batchHandler() http.Handler {
+	fn := UploadBatchFullURLPage
 	return http.HandlerFunc(fn)
 }
