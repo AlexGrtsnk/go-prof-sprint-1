@@ -9,6 +9,8 @@ type Event struct {
 	ID       int    `json:"id"`
 	ShortURL string `json:"short_url"`
 	LongURL  string `json:"longURL"`
+	Tknm     string `json:"tknm"`
+	DelFlag  int    `json:"delFlag"`
 }
 
 type Producer struct {

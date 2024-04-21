@@ -135,7 +135,7 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 	return longURL, 1, nil
 }
 
-func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
+func DataBaseDownloadFullURLPagePost(id string, longURL string, tknm string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -146,9 +146,18 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 		return err
 	}
 	defer db.Close()
-	quer := "INSERT INTO short_longURL(short_url, longURL) VALUES('" + string(id) + "', '" + string(longURL) + "');"
+	quer := `INSERT INTO short_longURL(short_url, longURL, tknm) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + tknm + `')`
+	//quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + tknm[:10] + `')`
+	//quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + tknm[:10] + `')`
+
+	//quer := "INSERT INTO short_longURL(short_url, longURL, tknm) VALUES ('qwe', 'qwe1', 'qwe2')"
+	//quer := "INSERT INTO short_longURL VALUES (1, 'qwe12', 'qwe', 'qwe1')"
+	//quer := `INSERT INTO short_longURL(short_url, longURL, token) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + string(id) + `')`
+	//quer := "INSERT INTO short_longURL(short_url, longURL) VALUES('" + string(id) + "', '" + string("dasda") + "');"
+	fmt.Println(quer)
 	_, err = db.Exec(quer)
 	if err != nil {
+		fmt.Println("adsadasdasdawdawdawe")
 		return err
 	}
 	return nil
@@ -167,6 +176,7 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 	}
 	defer db.Close()
 	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
+	fmt.Println(quer)
 	_, err = db.Exec(quer)
 	if err != nil {
 		return err
@@ -237,7 +247,7 @@ func DataBaseInsert(id string) (err error) {
 		if err_ != nil {
 			break
 		}
-		quer := `INSERT INTO short_longURL(short_url, longURL) VALUES ('` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `');`
+		quer := `INSERT INTO short_longURL(short_url, longURL, tknm) VALUES ('` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `', '` + readEvent.Tknm + `');`
 		_, err = db.Exec(quer)
 		if err != nil {
 			return err
@@ -276,7 +286,7 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 	}
 	return apiRunAddr, nil
 }
-func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
+func DataBaseJSONPage(shortURL string, longURL string, tknm string) (b int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -288,7 +298,9 @@ func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 		return 0, err
 	}
 	defer db.Close()
+	//quer := "SELECT id FROM short_longURL WHERE short_url = '" + string(shortURL) + "' and longURL ='" + longURL + "' and tknm = '" + tknm + "';"
 	quer := "SELECT id FROM short_longURL WHERE short_url = '" + string(shortURL) + "' and longURL ='" + longURL + "';"
+	fmt.Println(quer)
 	rows, err := db.Query(quer)
 	if err != nil {
 		return 0, err
@@ -306,7 +318,7 @@ func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	return id, nil
 }
 
-func DataBaseFilePost(shortURL string, longURL string) (err error) {
+func DataBaseFilePost(shortURL string, longURL string, tknm string) (err error) {
 	fileName, err := DataBaseFileNameSelect()
 	if err != nil {
 		log.Fatal(err)
@@ -316,11 +328,12 @@ func DataBaseFilePost(shortURL string, longURL string) (err error) {
 		log.Fatal(err)
 	}
 	defer Producer.Close()
-	id, err := DataBaseJSONPage(shortURL, longURL)
+	id, err := DataBaseJSONPage(shortURL, longURL, tknm)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
+	fmt.Println("12344, ", tknm)
+	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Tknm: tknm, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
 		log.Fatal(err)

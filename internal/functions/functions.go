@@ -10,6 +10,8 @@ import (
 	"net/http"
 
 	apcfg "go-prof-sprint-1/internal/app_config"
+	ath "go-prof-sprint-1/internal/authentification"
+	cks "go-prof-sprint-1/internal/cookies"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
 	Flw "go-prof-sprint-1/internal/json_parser"
@@ -32,6 +34,20 @@ func generateShortKey() string {
 }
 
 func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
+	token, err := cks.GetCookieHandler(w, r)
+	kol := 0
+	if err != nil {
+		kol += 1
+	}
+	errr := ath.GetUserID(token)
+	if errr == -1 {
+		token, err = ath.BuildJWTString()
+		if err != nil {
+			kol += 1
+		}
+		cks.SetCookieHandler(w, r, token)
+	}
+
 	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -105,6 +121,20 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
+	token, err := cks.GetCookieHandler(res, req)
+	kol := 0
+	if err != nil {
+		kol += 1
+	}
+	errr := ath.GetUserID(token)
+	if errr == -1 {
+		token, err = ath.BuildJWTString()
+		if err != nil {
+			kol += 1
+		}
+		cks.SetCookieHandler(res, req, token)
+	}
+
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -146,7 +176,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db.DataBaseDownloadFullURLPagePost(id, longURL)
+		err := db.DataBaseDownloadFullURLPagePost(id, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -154,8 +184,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		//if db.OldName != "" {
-		err = db.DataBaseFilePost(id, longURL)
+		err = db.DataBaseFilePost(id, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -163,11 +192,23 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		//}
 	}
 }
 
 func JSONPage(res http.ResponseWriter, req *http.Request) {
+	token, err := cks.GetCookieHandler(res, req)
+	kol := 0
+	if err != nil {
+		kol += 1
+	}
+	errr := ath.GetUserID(token)
+	if errr == -1 {
+		token, err = ath.BuildJWTString()
+		if err != nil {
+			kol += 1
+		}
+		cks.SetCookieHandler(res, req, token)
+	}
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		if err != nil {
@@ -229,7 +270,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DataBaseDownloadFullURLPagePost(shortURL, longURL)
+		err = db.DataBaseDownloadFullURLPagePost(shortURL, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -250,7 +291,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DataBaseFilePost(shortURL, longURL)
+		err = db.DataBaseFilePost(shortURL, longURL, "qew")
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -280,6 +321,19 @@ func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
+	token, err := cks.GetCookieHandler(res, req)
+	kol := 0
+	if err != nil {
+		kol += 1
+	}
+	errr := ath.GetUserID(token)
+	if errr == -1 {
+		token, err = ath.BuildJWTString()
+		if err != nil {
+			kol += 1
+		}
+		cks.SetCookieHandler(res, req, token)
+	}
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -320,7 +374,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 				return
 			} else {
 				shortURL := generateShortKey()
-				err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL)
+				err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL, token)
 				if err != nil {
 					res.WriteHeader(http.StatusBadRequest)
 					_, err = io.WriteString(res, "Error on the database side")
@@ -332,7 +386,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 				answ.CorrelationID = produceItem.CorrelationID
 				answ.ShortURL = apiRunAddr + "/" + shortURL
 				tempItems = append(tempItems, answ)
-				err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL)
+				err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL, token)
 				if err != nil {
 					res.WriteHeader(http.StatusBadRequest)
 					_, err = io.WriteString(res, "Error on the database side")
@@ -348,6 +402,29 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			log.Panic(err)
 		}
 	}
+}
+
+func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
+	token, err := cks.GetCookieHandler(res, req)
+	kol := 0
+	if err != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	errr := ath.GetUserID(token)
+	if errr != -1 {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if errr == -1 {
+		token, err = ath.BuildJWTString()
+		if err != nil {
+			kol += 1
+		}
+		cks.SetCookieHandler(res, req, token)
+	}
+	res.WriteHeader(http.StatusAccepted)
+
 }
 
 func Run() error {
@@ -399,6 +476,7 @@ func Run() error {
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
+	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
@@ -437,5 +515,10 @@ func pingHandler() http.Handler {
 
 func batchHandler() http.Handler {
 	fn := UploadBatchFullURLPage
+	return http.HandlerFunc(fn)
+}
+
+func authHandler() http.Handler {
+	fn := GetConcreteURLSUser
 	return http.HandlerFunc(fn)
 }
