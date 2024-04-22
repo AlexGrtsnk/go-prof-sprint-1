@@ -466,7 +466,6 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	res.WriteHeader(http.StatusOK)
 	res.Header().Set("Content-Type", "application/json")
 	if req.Method == http.MethodGet {
 		//cookie, err := req.Cookie("exampleCookie")
@@ -486,10 +485,11 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 
 		} else {
+			res.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(res).Encode(klnm); err != nil {
 				log.Panic(err)
 			}
-			fmt.Println("HEEEEEELP   ,", req.Header)
+			fmt.Println("HEEEEEELP   ,", res)
 			return
 		}
 		fmt.Println("HEEEEEELP   ,", klnm)
