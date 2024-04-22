@@ -25,7 +25,7 @@ func TestCreateShortURLPage(t *testing.T) {
 			want: want{
 				code: 400,
 				//response:    `{"status":"ok"}`,
-				//contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
