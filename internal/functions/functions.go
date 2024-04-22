@@ -466,48 +466,51 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	cookie, err := req.Cookie("exampleCookie")
-	fmt.Println("What cookies are send????????????", cookie.Value)
-	kol := 0
-	klnm, err := db.DataBaseGetAllURLs("aaaa")
-	token := "aaaa"
-	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
-		_, err = io.WriteString(res, "Error on the database side")
+	if req.Method == http.MethodGet {
+		cookie, err := req.Cookie("exampleCookie")
+		fmt.Println("What cookies are send????????????", cookie)
+		kol := 0
+		klnm, err := db.DataBaseGetAllURLs("aaaa")
+		token := "aaaa"
 		if err != nil {
-			log.Fatal(err)
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-	}
-	if klnm == nil {
-		res.WriteHeader(http.StatusNoContent)
-		return
+		if klnm == nil {
+			res.WriteHeader(http.StatusNoContent)
+			return
 
-	} else {
-		res.WriteHeader(http.StatusAccepted)
-		res.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(res).Encode(klnm); err != nil {
-			log.Panic(err)
+		} else {
+			res.WriteHeader(http.StatusOK)
+			res.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(res).Encode(klnm); err != nil {
+				log.Panic(err)
+			}
+			fmt.Println("HEEEEEELP   ,", klnm)
+			return
 		}
-		return
-	}
-	fmt.Println("HEEEEEELP   ,", klnm)
-	if err != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	errr := ath.GetUserID(token)
-	if errr != -1 {
-		res.WriteHeader(http.StatusNoContent)
-		return
-	}
-	if errr == -1 {
-		token, err = ath.BuildJWTString()
+		fmt.Println("HEEEEEELP   ,", klnm)
 		if err != nil {
-			kol += 1
+			res.WriteHeader(http.StatusUnauthorized)
+			return
 		}
-		cks.SetCookieHandler(res, req, token)
+		errr := ath.GetUserID(token)
+		if errr != -1 {
+			res.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(res, req, token)
+		}
+		res.WriteHeader(http.StatusAccepted)
 	}
-	res.WriteHeader(http.StatusAccepted)
 
 }
 
@@ -557,12 +560,12 @@ func Run() error {
 	mux1 := mux.NewRouter()
 	//mux1.HandleFunc(`/set`, setCookieHandler)
 	//mux1.HandleFunc(`/get`, getCookieHandler)
-	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
-	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
 	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
+	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
+	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
