@@ -106,6 +106,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		}
 		cks.SetCookieHandler(w, r, token)
 	}
+	token = "aaaa"
 
 	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 	if err != nil {
@@ -193,7 +194,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 		cks.SetCookieHandler(res, req, token)
 	}
-
+	token = "aaaa"
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -393,6 +394,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 		cks.SetCookieHandler(res, req, token)
 	}
+	token = "aaaa"
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -465,6 +467,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 	token, _ := cks.GetCookieHandler(res, req)
+	fmt.Println("What cookies are send????????????", token)
 	kol := 0
 	klnm, err := db.DataBaseGetAllURLs("aaaa")
 	if err != nil {
