@@ -33,15 +33,74 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
+/*
+	func setCookieHandler(w http.ResponseWriter, r *http.Request) {
+		// Initialize a new cookie containing the string "Hello world!" and some
+		// non-default attributes.
+		fmt.Println("We are in cookies1")
+
+		_, err := ath.BuildJWTString()
+		if err != nil {
+			return
+		}
+		fmt.Println("We are in cookies2")
+
+		cookie := http.Cookie{
+			Name:     "exampleCookie",
+			Value:    "Help me",
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: false,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
+		}
+		fmt.Println("We are in cookies")
+
+		// Use the http.SetCookie() function to send the cookie to the client.
+		// Behind the scenes this adds a `Set-Cookie` header to the response
+		// containing the necessary cookie data.
+		http.SetCookie(w, &cookie)
+		fmt.Println("We are in cookies")
+
+		// Write a HTTP response as normal.
+		w.Write([]byte("cookie set!"))
+	}
+
+	func getCookieHandler(w http.ResponseWriter, r *http.Request) {
+		// Retrieve the cookie from the request using its name (which in our case is
+		// "exampleCookie"). If no matching cookie is found, this will return a
+		// http.ErrNoCookie error. We check for this, and return a 400 Bad Request
+		// response to the client.
+
+		fmt.Println("We are in cookies8")
+
+		cookie, err := r.Cookie("exampleCookie")
+		if err != nil {
+			switch {
+			case errors.Is(err, http.ErrNoCookie):
+				http.Error(w, "cookie not found", http.StatusBadRequest)
+			default:
+				log.Println(err)
+				http.Error(w, "server error", http.StatusInternalServerError)
+			}
+			return
+		}
+		fmt.Println("We are in cookies9")
+
+		// Echo out the cookie value in the response body.
+		w.Write([]byte(cookie.Value))
+	}
+*/
 func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	token, err := cks.GetCookieHandler(w, r)
 	kol := 0
 	if err != nil {
 		kol += 1
 	}
+	fmt.Println("THIS IS TOKEN : ", token, kol)
 	errr := ath.GetUserID(token)
 	if errr == -1 {
-		token, err = ath.BuildJWTString()
+		_, err = ath.BuildJWTString()
 		if err != nil {
 			kol += 1
 		}
@@ -405,8 +464,28 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	token, err := cks.GetCookieHandler(res, req)
+	token, _ := cks.GetCookieHandler(res, req)
 	kol := 0
+	klnm, err := db.DataBaseGetAllURLs("aaaa")
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		_, err = io.WriteString(res, "Error on the database side")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if klnm == nil {
+		res.WriteHeader(http.StatusNoContent)
+		return
+
+	} else {
+		res.WriteHeader(http.StatusAccepted)
+		res.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(res).Encode(klnm); err != nil {
+			log.Panic(err)
+		}
+	}
+	fmt.Println("HEEEEEELP   ,", klnm)
 	if err != nil {
 		res.WriteHeader(http.StatusUnauthorized)
 		return
@@ -471,6 +550,8 @@ func Run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
 	mux1 := mux.NewRouter()
+	//mux1.HandleFunc(`/set`, setCookieHandler)
+	//mux1.HandleFunc(`/get`, getCookieHandler)
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))

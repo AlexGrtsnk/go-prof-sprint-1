@@ -442,3 +442,53 @@ func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
 	}
 	return nil
 }
+
+func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return nil, err
+	}
+	apiRunAddr, err := DataBaseCreateShortURLPageCfg()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return nil, err
+	}
+	quer := "SELECT short_url, longURL from short_longURL where tknm = '" + tknm + "';"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("help me please1")
+	flag := 0
+	for rows.Next() {
+		fmt.Println("help me please2")
+		answ := new(AnswerBatch)
+		err = rows.Scan(&answ.ShortURL, &answ.LongURL)
+		if err != nil {
+			fmt.Println("help me please")
+			return nil, err
+		}
+		if rows.Err() != nil {
+			fmt.Println("help me please")
+			return nil, rows.Err()
+		}
+		answ.ShortURL = apiRunAddr + "/" + answ.ShortURL
+		answb = append(answb, *answ)
+		flag = 1
+	}
+	if flag == 0 {
+		return nil, nil
+	}
+	fmt.Println("help me please4")
+	return
+}
+
+type AnswerBatch struct {
+	ShortURL string `json:"short_url"`
+	LongURL  string `json:"longURL"`
+}
