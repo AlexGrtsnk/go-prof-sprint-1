@@ -466,10 +466,11 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	token, _ := cks.GetCookieHandler(res, req)
-	fmt.Println("What cookies are send????????????", token)
+	cookie, err := req.Cookie("exampleCookie")
+	fmt.Println("What cookies are send????????????", cookie.Value)
 	kol := 0
 	klnm, err := db.DataBaseGetAllURLs("aaaa")
+	token := "aaaa"
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(res, "Error on the database side")
@@ -487,6 +488,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		if err := json.NewEncoder(res).Encode(klnm); err != nil {
 			log.Panic(err)
 		}
+		return
 	}
 	fmt.Println("HEEEEEELP   ,", klnm)
 	if err != nil {
