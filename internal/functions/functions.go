@@ -466,9 +466,11 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
+	res.WriteHeader(http.StatusOK)
+	res.Header().Set("Content-Type", "application/json")
 	if req.Method == http.MethodGet {
-		cookie, err := req.Cookie("exampleCookie")
-		fmt.Println("What cookies are send????????????", cookie)
+		//cookie, err := req.Cookie("exampleCookie")
+		//fmt.Println("What cookies are send????????????", cookie)
 		kol := 0
 		klnm, err := db.DataBaseGetAllURLs("aaaa")
 		token := "aaaa"
@@ -484,12 +486,10 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 
 		} else {
-			res.WriteHeader(http.StatusOK)
-			res.Header().Set("Content-Type", "application/json")
 			if err := json.NewEncoder(res).Encode(klnm); err != nil {
 				log.Panic(err)
 			}
-			fmt.Println("HEEEEEELP   ,", klnm)
+			fmt.Println("HEEEEEELP   ,", req.Header)
 			return
 		}
 		fmt.Println("HEEEEEELP   ,", klnm)
@@ -560,10 +560,10 @@ func Run() error {
 	mux1 := mux.NewRouter()
 	//mux1.HandleFunc(`/set`, setCookieHandler)
 	//mux1.HandleFunc(`/get`, getCookieHandler)
+	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
-	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
