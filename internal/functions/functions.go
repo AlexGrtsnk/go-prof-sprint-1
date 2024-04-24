@@ -171,7 +171,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			client := http.Client{}
 			fmt.Println("Before request2")
 
-			request, err := http.NewRequest("POST", apiRunAddr+"/"+string(shortURL), nil)
+			request, err := http.NewRequest("POST", apiRunAddr+"/"+string(shortURL), b)
 			fmt.Println("Before request3")
 
 			if err != nil {
