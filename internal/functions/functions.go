@@ -100,7 +100,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("THIS IS TOKEN : ", token, kol)
 	errr := ath.GetUserID(token)
 	if errr == -1 {
-		_, err = ath.BuildJWTString()
+		token, err = ath.BuildJWTString()
 		if err != nil {
 			kol += 1
 		}
@@ -186,6 +186,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		kol += 1
 	}
+	fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", kol)
 	errr := ath.GetUserID(token)
 	if errr == -1 {
 		token, err = ath.BuildJWTString()
@@ -467,10 +468,27 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	if req.Method == http.MethodGet {
-		//cookie, err := req.Cookie("exampleCookie")
-		//fmt.Println("What cookies are send????????????", cookie)
+	/*
 		token, err := cks.GetCookieHandler(res, req)
+		var a Flw.DeleteList
+		var b Flw.DeleteURL
+		var c Flw.DeleteURL
+		b.CorrelationID = 1
+		a = append(a, b)
+		c.CorrelationID = 2
+		a = append(a, c)
+		db.DataBaseDeleteURLs(a, "aaaa")
+		if err != nil {
+			log.Panic(err)
+		}
+	*/
+	if req.Method == http.MethodGet {
+		token, err := cks.GetCookieHandler(res, req)
+		fmt.Println("What cookies are send????????????", token)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		kol := 0
 		klnm, err := db.DataBaseGetAllURLs(token)
 		//token := "aaaa"
@@ -494,10 +512,6 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		fmt.Println("HEEEEEELP   ,", klnm)
-		if err != nil {
-			res.WriteHeader(http.StatusUnauthorized)
-			return
-		}
 		errr := ath.GetUserID(token)
 		if errr != -1 {
 			res.WriteHeader(http.StatusNoContent)
@@ -511,6 +525,63 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			cks.SetCookieHandler(res, req, token)
 		}
 		res.WriteHeader(http.StatusAccepted)
+	}
+	if req.Method == http.MethodDelete {
+		reader, err := gzp.GzipFormatHandlerJSON(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		var newProduceItems Flw.DeleteList
+		var buf bytes.Buffer
+		_, err = buf.ReadFrom(reader)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err = json.Unmarshal(buf.Bytes(), &newProduceItems); err != nil {
+			http.Error(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+		//var tempItems []AnswerBatch
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
+		db.DataBaseDeleteURLs(newProduceItems, "aaaa")
+		/*
+			for idx, produceItem := range newProduceItems {
+				if len(produceItem.OriginalURL) <= 0 {
+					errMsg := fmt.Sprintf("Item %d: Incorrect produce code sequence or product name. Example code sequence: A12T-4GH7-QPL9-3N4M", idx)
+					http.Error(res, errMsg, http.StatusBadRequest)
+					return
+				} else {
+					shortURL := generateShortKey()
+					err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL, token)
+					if err != nil {
+						res.WriteHeader(http.StatusBadRequest)
+						_, err = io.WriteString(res, "Error on the database side")
+						if err != nil {
+							log.Fatal(err)
+						}
+					}
+					var answ AnswerBatch
+					answ.CorrelationID = produceItem.CorrelationID
+					answ.ShortURL = apiRunAddr + "/" + shortURL
+					tempItems = append(tempItems, answ)
+					err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL, token)
+					if err != nil {
+						res.WriteHeader(http.StatusBadRequest)
+						_, err = io.WriteString(res, "Error on the database side")
+						if err != nil {
+							log.Fatal(err)
+						}
+					}
+
+				}
+			}*/
+
 	}
 
 }

@@ -1,62 +1,90 @@
 package cookies
 
 import (
+	"encoding/base64"
 	"errors"
 	"net/http"
 )
 
-/*
-	func main() {
-		// Start a web server with the two endpoints.
-		mux := http.NewServeMux()
-		mux.HandleFunc("/set", setCookieHandler)
-		mux.HandleFunc("/get", getCookieHandler)
+var (
+	ErrValueTooLong = errors.New("cookie value too long")
+	ErrInvalidValue = errors.New("invalid cookie value")
+)
 
-		log.Print("Listening...")
-		err := http.ListenAndServe(":3000", mux)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-*/
-func SetCookieHandler(w http.ResponseWriter, r *http.Request, token string) (err error) {
-	// Initialize a new cookie containing the string "Hello world!" and some
-	// non-default attributes.
-	cookie := http.Cookie{
-		Name:     "exampleCookie",
-		Value:    token,
-		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: false,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+func Write(w http.ResponseWriter, cookie http.Cookie) error {
+	// Encode the cookie value using base64.
+	cookie.Value = base64.URLEncoding.EncodeToString([]byte(cookie.Value))
+
+	// Check the total length of the cookie contents. Return the ErrValueTooLong
+	// error if it's more than 4096 bytes.
+	if len(cookie.String()) > 4096 {
+		return ErrValueTooLong
 	}
 
-	// Use the http.SetCookie() function to send the cookie to the client.
-	// Behind the scenes this adds a `Set-Cookie` header to the response
-	// containing the necessary cookie data.
+	// Write the cookie as normal.
 	http.SetCookie(w, &cookie)
 
-	// Write a HTTP response as normal.
 	return nil
 }
 
-func GetCookieHandler(w http.ResponseWriter, r *http.Request) (id string, err error) {
-	// Retrieve the cookie from the request using its name (which in our case is
-	// "exampleCookie"). If no matching cookie is found, this will return a
-	// http.ErrNoCookie error. We check for this, and return a 400 Bad Request
-	// response to the client.
-	cookie, err := r.Cookie("exampleCookie")
+func Read(r *http.Request, name string) (string, error) {
+	// Read the cookie as normal.
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+
+	// Decode the base64-encoded cookie value. If the cookie didn't contain a
+	// valid base64-encoded value, this operation will fail and we return an
+	// ErrInvalidValue error.
+	value, err := base64.URLEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		return "", ErrInvalidValue
+	}
+
+	// Return the decoded cookie value.
+	return string(value), nil
+}
+
+func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err error) {
+	// Initialize the cookie as normal.
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    tknm,
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	// Write the cookie. If there is an error (due to an encoding failure or it
+	// being too long) then log the error and send a 500 Internal Server Error
+	// response.
+	err = Write(w, cookie)
+	if err != nil {
+		return err
+	}
+	return nil
+	//w.Write([]byte("cookie set!"))
+}
+
+func GetCookieHandler(w http.ResponseWriter, r *http.Request) (value string, err error) {
+	// Use the Read() function to retrieve the cookie value, additionally
+	// checking for the ErrInvalidValue error and handling it as necessary.
+	value, err = Read(r, "exampleCookie")
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
-			return "", http.ErrNoCookie
+			//http.Error(w, "cookie not found", http.StatusBadRequest)
+			return "", err
+		case errors.Is(err, ErrInvalidValue):
+			//http.Error(w, "invalid cookie", http.StatusBadRequest)
+			return "", err
 		default:
-			//log.Println(err)
-			return "", http.ErrAbortHandler
-			//http.Error(w, "server error", http.StatusInternalServerError)
+			return "", err
 		}
+		return
 	}
-
-	return cookie.Value, nil
+	return value, nil
 }

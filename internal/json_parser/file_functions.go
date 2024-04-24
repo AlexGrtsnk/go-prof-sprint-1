@@ -24,6 +24,11 @@ type ProduceURL struct {
 }
 type ProduceList []ProduceURL
 
+type DeleteURL struct {
+	CorrelationID int `json:"correlation_id"`
+}
+type DeleteList []DeleteURL
+
 func NewProducer(fileName string) (*Producer, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

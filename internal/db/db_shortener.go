@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 
 	bn "go-prof-sprint-1/internal/bindata"
 
@@ -486,6 +487,43 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 	}
 	fmt.Println("help me please4")
 	return
+}
+
+func DataBaseDeleteURL(longURL int, tknm string) (err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return err
+	}
+	quer := "UPDATE short_longURL SET delFlag=1 WHERE id = " + fmt.Sprint(longURL) + " and tknm = '" + tknm + "';"
+	fmt.Println("THIS IS ION COROUTINE: ", longURL)
+	_, err = db.Exec(quer)
+	if err != nil {
+		return err
+	}
+	fmt.Println("SOMETHING HAPPENED")
+	return nil
+
+}
+
+func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
+	var wg sync.WaitGroup
+	for _, produceItem := range ids {
+		wg.Add(1)
+		a := produceItem.CorrelationID
+		go func(a int) (err error) {
+			err = DataBaseDeleteURL(a, tknm)
+			wg.Done()
+			return err
+		}(a)
+
+	}
+	return err
 }
 
 type AnswerBatch struct {
