@@ -63,7 +63,7 @@ func setCookieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("cookie set!"))
+	//w.Write([]byte("cookie set!"))
 }
 
 func getCookieHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +84,7 @@ func getCookieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(value))
+	//w.Write([]byte(value))
 }
 
 func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
