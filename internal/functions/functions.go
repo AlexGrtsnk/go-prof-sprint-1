@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 	apcfg "go-prof-sprint-1/internal/app_config"
 	ath "go-prof-sprint-1/internal/authentification"
+	"go-prof-sprint-1/internal/cookies"
 	cks "go-prof-sprint-1/internal/cookies"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
@@ -33,82 +35,89 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
-/*
-	func setCookieHandler(w http.ResponseWriter, r *http.Request) {
-		// Initialize a new cookie containing the string "Hello world!" and some
-		// non-default attributes.
-		fmt.Println("We are in cookies1")
-
-		_, err := ath.BuildJWTString()
-		if err != nil {
-			return
-		}
-		fmt.Println("We are in cookies2")
-
-		cookie := http.Cookie{
-			Name:     "exampleCookie",
-			Value:    "Help me",
-			Path:     "/",
-			MaxAge:   3600,
-			HttpOnly: false,
-			Secure:   false,
-			SameSite: http.SameSiteLaxMode,
-		}
-		fmt.Println("We are in cookies")
-
-		// Use the http.SetCookie() function to send the cookie to the client.
-		// Behind the scenes this adds a `Set-Cookie` header to the response
-		// containing the necessary cookie data.
-		http.SetCookie(w, &cookie)
-		fmt.Println("We are in cookies")
-
-		// Write a HTTP response as normal.
-		w.Write([]byte("cookie set!"))
-	}
-
-	func getCookieHandler(w http.ResponseWriter, r *http.Request) {
-		// Retrieve the cookie from the request using its name (which in our case is
-		// "exampleCookie"). If no matching cookie is found, this will return a
-		// http.ErrNoCookie error. We check for this, and return a 400 Bad Request
-		// response to the client.
-
-		fmt.Println("We are in cookies8")
-
-		cookie, err := r.Cookie("exampleCookie")
-		if err != nil {
-			switch {
-			case errors.Is(err, http.ErrNoCookie):
-				http.Error(w, "cookie not found", http.StatusBadRequest)
-			default:
-				log.Println(err)
-				http.Error(w, "server error", http.StatusInternalServerError)
-			}
-			return
-		}
-		fmt.Println("We are in cookies9")
-
-		// Echo out the cookie value in the response body.
-		w.Write([]byte(cookie.Value))
-	}
-*/
-func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
-	token, err := cks.GetCookieHandler(w, r)
-	kol := 0
+func setCookieHandler(w http.ResponseWriter, r *http.Request) {
+	// Initialize the cookie as normal.
+	//errr := ath.GetUserID(token)
+	token, err := ath.BuildJWTString()
 	if err != nil {
-		kol += 1
+		log.Fatal(err)
 	}
-	fmt.Println("THIS IS TOKEN : ", token, kol)
-	errr := ath.GetUserID(token)
-	if errr == -1 {
-		token, err = ath.BuildJWTString()
+
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	// Write the cookie. If there is an error (due to an encoding failure or it
+	// being too long) then log the error and send a 500 Internal Server Error
+	// response.
+	err = cks.Write(w, cookie)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte("cookie set!"))
+}
+
+func getCookieHandler(w http.ResponseWriter, r *http.Request) {
+	// Use the Read() function to retrieve the cookie value, additionally
+	// checking for the ErrInvalidValue error and handling it as necessary.
+	value, err := cks.Read(r, "exampleCookie")
+	fmt.Println("VALUE OF COOKIE INSIDE", value)
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			http.Error(w, "cookie not found", http.StatusBadRequest)
+		case errors.Is(err, cookies.ErrInvalidValue):
+			http.Error(w, "invalid cookie", http.StatusBadRequest)
+		default:
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Write([]byte(value))
+}
+
+func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
+	/*
+		token, err := cks.GetCookieHandler(w, r)
+		kol := 0
 		if err != nil {
 			kol += 1
 		}
-		cks.SetCookieHandler(w, r, token)
-	}
-	//token = "aaaa"
-
+		fmt.Println("THIS IS TOKEN : ", token, kol)
+		errr := ath.GetUserID(token)
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(w, r, token)
+		}
+		token, _ = cks.GetCookieHandler(w, r)
+		fmt.Println("SADWEQE, ", token)
+		//token = "aaaa"
+	*/
 	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
+	resp, err := http.Get(apiRunAddr + "/" + "set")
+	//_, err = http.Get(apiRunAddr + "/" + "get")
+	var cks_tmp *http.Cookie
+	for _, ck := range resp.Cookies() {
+		if ck.Name == "exampleCookie" {
+			cks_tmp = ck
+		}
+	}
+	http.SetCookie(w, cks_tmp)
+	fmt.Println(cks_tmp)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err = io.WriteString(w, "Error on the side")
@@ -156,11 +165,30 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		if shortURL != "" {
-			resp, err := http.Post(apiRunAddr+"/"+string(shortURL), "text/plain", b)
+			//resp, err := http.Post(apiRunAddr+"/"+string(shortURL), "text/plain", b)
+			fmt.Println("Before request1")
+
+			client := http.Client{}
+			fmt.Println("Before request2")
+
+			request, err := http.NewRequest("POST", apiRunAddr+"/"+string(shortURL), nil)
+			fmt.Println("Before request3")
+
 			if err != nil {
-				return
+				log.Fatal(err)
 			}
-			defer resp.Body.Close()
+			fmt.Println("Before request4")
+			//w.Cookies()
+			//cookiesTemp, _ := r.Cookie("exampleCookie")
+			fmt.Println("Before request5: ", cks_tmp)
+			request.AddCookie(cks_tmp)
+			fmt.Println("Before request")
+			_, err = client.Do(request)
+			fmt.Println("After request")
+			if err != nil {
+				log.Fatal(err)
+			}
+			//defer resp.Body.Close()
 			w.WriteHeader(http.StatusCreated)
 			_, err = io.WriteString(w, apiRunAddr+"/"+shortURL)
 			if err != nil {
@@ -186,7 +214,15 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		kol += 1
 	}
-	fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", kol)
+	var cks_tmp *http.Cookie
+	for _, ck := range req.Cookies() {
+		if ck.Name == "exampleCookie" {
+			cks_tmp = ck
+		}
+	}
+	http.SetCookie(res, cks_tmp)
+	fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
+	fmt.Println("token1 :", token)
 	errr := ath.GetUserID(token)
 	if errr == -1 {
 		token, err = ath.BuildJWTString()
@@ -195,6 +231,8 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 		cks.SetCookieHandler(res, req, token)
 	}
+	fmt.Println("token1 :", token)
+	fmt.Println("token :", token)
 	//token = "aaaa"
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
@@ -630,8 +668,8 @@ func Run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
 	mux1 := mux.NewRouter()
-	//mux1.HandleFunc(`/set`, setCookieHandler)
-	//mux1.HandleFunc(`/get`, getCookieHandler)
+	mux1.HandleFunc(`/set`, setCookieHandler)
+	mux1.HandleFunc(`/get`, getCookieHandler)
 	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
