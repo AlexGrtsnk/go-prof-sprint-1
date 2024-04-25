@@ -116,7 +116,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			cks_tmp = ck
 		}
 	}
-	http.SetCookie(w, cks_tmp)
+	//http.SetCookie(w, cks_tmp)
 	fmt.Println(cks_tmp)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -125,6 +125,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}
+	_ = cks.SetCookieHandler(w, r, cks_tmp.Value)
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -231,8 +232,9 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 		cks.SetCookieHandler(res, req, token)
 	}
+	_ = cks.SetCookieHandler(res, req, token)
 	fmt.Println("token1 :", token)
-	fmt.Println("token :", token)
+	fmt.Println("token :", kol)
 	//token = "aaaa"
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
@@ -295,19 +297,22 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func JSONPage(res http.ResponseWriter, req *http.Request) {
-	token, err := cks.GetCookieHandler(res, req)
-	kol := 0
-	if err != nil {
-		kol += 1
-	}
-	errr := ath.GetUserID(token)
-	if errr == -1 {
-		token, err = ath.BuildJWTString()
+	/*
+		token, err := cks.GetCookieHandler(res, req)
+		kol := 0
 		if err != nil {
 			kol += 1
 		}
-		cks.SetCookieHandler(res, req, token)
-	}
+		errr := ath.GetUserID(token)
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(res, req, token)
+		}
+	*/
+	token := "aaa"
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		if err != nil {
@@ -420,20 +425,22 @@ func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
-	token, err := cks.GetCookieHandler(res, req)
-	kol := 0
-	if err != nil {
-		kol += 1
-	}
-	errr := ath.GetUserID(token)
-	if errr == -1 {
-		token, err = ath.BuildJWTString()
+	/*
+		token, err := cks.GetCookieHandler(res, req)
+		kol := 0
 		if err != nil {
 			kol += 1
 		}
-		cks.SetCookieHandler(res, req, token)
-	}
-	//token = "aaaa"
+		errr := ath.GetUserID(token)
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(res, req, token)
+		}
+	*/
+	token := "aaaa"
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -520,6 +527,35 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			log.Panic(err)
 		}
 	*/
+	if req.Method == http.MethodPost {
+		token, err := cks.GetCookieHandler(res, req)
+		kol := 0
+		if err != nil {
+			kol += 1
+		}
+		var cks_tmp *http.Cookie
+		for _, ck := range req.Cookies() {
+			if ck.Name == "exampleCookie" {
+				cks_tmp = ck
+			}
+		}
+		http.SetCookie(res, cks_tmp)
+		fmt.Println("HERE TEORETICALLY MUST BE COOKIE in fucn ", cks_tmp)
+		fmt.Println("token1 in func :", token)
+		errr := ath.GetUserID(token)
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(res, req, token)
+		}
+		_ = cks.SetCookieHandler(res, req, token)
+		fmt.Println("token1 in func:", token)
+		fmt.Println("token : in func ", kol)
+
+	}
+
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
 		fmt.Println("What cookies are send????????????", token)
