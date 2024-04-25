@@ -117,24 +117,28 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
-		resp, err := http.Get(apiRunAddr + "/" + "set")
-		//_, err = http.Get(apiRunAddr + "/" + "get")
+		token, err := cks.GetCookieHandler(w, r)
 		var cks_tmp *http.Cookie
-		for _, ck := range resp.Cookies() {
-			if ck.Name == "exampleCookie" {
-				cks_tmp = ck
-			}
-		}
-		//http.SetCookie(w, cks_tmp)
-		fmt.Println(cks_tmp)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			_, err = io.WriteString(w, "Error on the side")
-			if err != nil {
-				log.Fatal(err)
+			resp, _ := http.Get(apiRunAddr + "/" + "set")
+			for _, ck := range resp.Cookies() {
+				if ck.Name == "exampleCookie" {
+					cks_tmp = ck
+				}
 			}
+			//http.SetCookie(w, cks_tmp)
+			fmt.Println(cks_tmp)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			token = cks_tmp.Value
 		}
-		_ = cks.SetCookieHandler(w, r, cks_tmp.Value)
+		//_, err = http.Get(apiRunAddr + "/" + "get")
+		_ = cks.SetCookieHandler(w, r, token)
 
 		rReader, err := io.ReadAll(reader)
 		if err != nil {
@@ -523,7 +527,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	//res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Content-Type", "application/json")
 	/*
 		token, err := cks.GetCookieHandler(res, req)
 		var a Flw.DeleteList
@@ -570,7 +574,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
-		fmt.Println("What cookies are send????????????", req.Method)
+		fmt.Println("What cookies are send????????????", token)
 		if err != nil {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
@@ -590,7 +594,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 
 		} else {
-			res.WriteHeader(http.StatusOK)
+			res.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(res).Encode(klnm); err != nil {
 				log.Panic(err)
 			}
