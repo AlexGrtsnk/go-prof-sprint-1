@@ -497,7 +497,6 @@ func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 	for _, produceItem := range ids {
 
 		wg.Add(1)
-		//var a string
 		a := string(produceItem)
 		go func(a string) {
 			_ = DataBaseDeleteURL(a, token)
@@ -506,11 +505,6 @@ func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 
 	}
 	return nil
-}
-
-type AnswerBatch struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
 }
 
 func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
@@ -540,4 +534,9 @@ func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
 		return 1, err
 	}
 	return flag, nil
+}
+
+type AnswerBatch struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }

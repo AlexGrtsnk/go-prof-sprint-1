@@ -34,7 +34,7 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
-func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
+func createShortURLPage(w http.ResponseWriter, r *http.Request) {
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -42,6 +42,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	}
 	if r.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
@@ -51,6 +52,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			return
 		}
 		var cookiesTmp *http.Cookie
 		_, err = cks.GetCookieHandler(w, r)
@@ -144,7 +146,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
+func downloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -225,7 +227,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func JSONPage(res http.ResponseWriter, req *http.Request) {
+func jsonPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		if err != nil {
@@ -349,7 +351,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
+func pingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		err := db.DataBasePingHandler()
 		if err != nil {
@@ -367,7 +369,7 @@ func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 }
-func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
+func uploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -461,7 +463,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
+func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
 		if err != nil {
@@ -581,12 +583,12 @@ func Run() error {
 }
 
 func apiHandler() http.Handler {
-	fn := DownloadFullURLPage
+	fn := downloadFullURLPage
 	return http.HandlerFunc(fn)
 }
 
 func mainHandler() http.Handler {
-	fn := CreateShortURLPage
+	fn := createShortURLPage
 	return http.HandlerFunc(fn)
 }
 
@@ -608,21 +610,21 @@ type NewAnser struct {
 }
 
 func jsonHandler() http.Handler {
-	fn := JSONPage
+	fn := jsonPage
 	return http.HandlerFunc(fn)
 }
 
 func pingHandler() http.Handler {
-	fn := PingDataBasePage
+	fn := pingDataBasePage
 	return http.HandlerFunc(fn)
 }
 
 func batchHandler() http.Handler {
-	fn := UploadBatchFullURLPage
+	fn := uploadBatchFullURLPage
 	return http.HandlerFunc(fn)
 }
 
 func authHandler() http.Handler {
-	fn := GetConcreteURLSUser
+	fn := getConcreteURLSUser
 	return http.HandlerFunc(fn)
 }
