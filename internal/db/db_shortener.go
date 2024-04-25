@@ -517,16 +517,15 @@ func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
 	for _, produceItem := range ids {
 
 		wg.Add(1)
-		var a string
-		a = string(produceItem)
-		go func(a string) (err error) {
-			err = DataBaseDeleteURL(a, tknm)
+		//var a string
+		a := string(produceItem)
+		go func(a string) {
+			_ = DataBaseDeleteURL(a, tknm)
 			wg.Done()
-			return err
 		}(a)
 
 	}
-	return err
+	return nil
 }
 
 type AnswerBatch struct {

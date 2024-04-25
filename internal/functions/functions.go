@@ -82,12 +82,15 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		}
 		longURL := string(rReader)
 		fmt.Println("This is long url always:   ", longURL)
-		kol := 0
 		if longURL == "" {
 			fmt.Println("we are here")
 			token, err := ath.BuildJWTString()
 			if err != nil {
-				kol += 1
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			cks.SetCookieHandler(w, r, token)
 			return
@@ -232,9 +235,12 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	}
 	if req.Method == http.MethodPost {
 		token, err := cks.GetCookieHandler(res, req)
-		kol := 0
 		if err != nil {
-			kol += 1
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
@@ -593,7 +599,10 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		}
 		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusAccepted)
-		db.DataBaseDeleteURLs(newDelitionItems, token)
+		err = db.DataBaseDeleteURLs(newDelitionItems, token)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+		}
 	}
 
 }
