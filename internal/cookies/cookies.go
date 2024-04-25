@@ -3,7 +3,6 @@ package cookies
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -73,24 +72,14 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (cks 
 	//w.Write([]byte("cookie set!"))
 }
 
-func GetCookieHandler(w http.ResponseWriter, r *http.Request) (value string, err error) {
+func GetCookieHandler(w http.ResponseWriter, r *http.Request) (token string, err error) {
 	// Use the Read() function to retrieve the cookie value, additionally
 	// checking for the ErrInvalidValue error and handling it as necessary.
 	cookie, err := r.Cookie("exampleCookie")
 	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			//http.Error(w, "cookie not found", http.StatusBadRequest)
-			return "", err
-		case errors.Is(err, ErrInvalidValue):
-			//http.Error(w, "invalid cookie", http.StatusBadRequest)
-			return "", err
-		default:
-			return "", err
-		}
-		return
+		return "", err
 	}
-	value = cookie.Value
-	fmt.Println("valuie of cookie inside ", value)
-	return value, nil
+	//value = cookie.Value
+	//fmt.Println("valuie of cookie inside ", value)
+	return cookie.Value, nil
 }
