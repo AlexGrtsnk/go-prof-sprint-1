@@ -647,7 +647,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, err.Error(), http.StatusBadGateway)
 			return
 		}
-		fmt.Println("this is in delete ", buf)
+		fmt.Println("this is in delete ", buf.String())
 		if err = json.Unmarshal(buf.Bytes(), &newProduceItems); err != nil {
 			http.Error(res, err.Error(), http.StatusForbidden)
 			return
