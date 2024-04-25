@@ -47,7 +47,7 @@ func Read(r *http.Request, name string) (string, error) {
 	return string(value), nil
 }
 
-func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err error) {
+func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (cks http.Cookie) {
 	// Initialize the cookie as normal.
 	cookie := http.Cookie{
 		Name:     "exampleCookie",
@@ -69,7 +69,7 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err 
 			return err
 		}
 	*/
-	return nil
+	return cookie
 	//w.Write([]byte("cookie set!"))
 }
 
