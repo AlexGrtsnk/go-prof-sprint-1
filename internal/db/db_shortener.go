@@ -503,6 +503,7 @@ func DataBaseDeleteURL(longURL string, tknm string) (err error) {
 	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = " + longURL + "';" // " and tknm = '" + tknm +
 	fmt.Println("THIS IS ION COROUTINE: ", longURL)
 	_, err = db.Exec(quer)
+	fmt.Println("SOMETHING HAPPENED", quer)
 	if err != nil {
 		return err
 	}
