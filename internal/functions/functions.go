@@ -140,6 +140,15 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			}
 			//_, err = http.Get(apiRunAddr + "/" + "get")
 			cks_tmp = cks.SetCookieHandler(w, r, token)
+		} else {
+			cks_tmp, err = r.Cookie("exampleCookie")
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 		}
 		rReader, err := io.ReadAll(reader)
 		if err != nil {
