@@ -310,27 +310,28 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			kol += 1
 		}
-		var cks_tmp *http.Cookie
-		for _, ck := range req.Cookies() {
-			if ck.Name == "exampleCookie" {
-				cks_tmp = ck
+		/*
+			var cks_tmp *http.Cookie
+			for _, ck := range req.Cookies() {
+				if ck.Name == "exampleCookie" {
+					cks_tmp = ck
+				}
 			}
-		}
-		http.SetCookie(res, cks_tmp)
-		fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
-		fmt.Println("token1 :", token)
-		errr := ath.GetUserID(token)
-		if errr == -1 {
-			token, err = ath.BuildJWTString()
-			if err != nil {
-				kol += 1
+			http.SetCookie(res, cks_tmp)
+			fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
+			fmt.Println("token1 :", token)
+			errr := ath.GetUserID(token)
+			if errr == -1 {
+				token, err = ath.BuildJWTString()
+				if err != nil {
+					kol += 1
+				}
+				cks.SetCookieHandler(res, req, token)
 			}
-			cks.SetCookieHandler(res, req, token)
-		}
-		_ = cks.SetCookieHandler(res, req, token)
-		fmt.Println("token1 :", token)
-		fmt.Println("token :", kol)
-
+			_ = cks.SetCookieHandler(res, req, token)
+			fmt.Println("token1 :", token)
+			fmt.Println("token :", kol)
+		*/
 		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
 		vars := mux.Vars(req)
