@@ -25,7 +25,7 @@ type ProduceURL struct {
 type ProduceList []ProduceURL
 
 type DeleteURL struct {
-	ShortURL string `json:"short_url"`
+	ShortURL string `json:""`
 }
 type DeleteList []DeleteURL
 
