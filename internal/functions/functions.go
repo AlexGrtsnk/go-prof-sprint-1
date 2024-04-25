@@ -15,7 +15,7 @@ import (
 	cks "go-prof-sprint-1/internal/cookies"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
-	Flw "go-prof-sprint-1/internal/json_parser"
+	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
 	"github.com/caarlos0/env"
@@ -410,7 +410,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			token = cookiesTmp.Value
 		}
 
-		var newProduceItems Flw.ProduceList
+		var newProduceItems flw.ProduceList
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
@@ -501,7 +501,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		var newDelitionItems Flw.DeleteList
+		var newDelitionItems flw.DeleteList
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {

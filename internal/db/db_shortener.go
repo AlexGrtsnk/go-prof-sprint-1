@@ -8,7 +8,7 @@ import (
 
 	bn "go-prof-sprint-1/internal/bindata"
 
-	Flw "go-prof-sprint-1/internal/json_parser"
+	flw "go-prof-sprint-1/internal/json_parser"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database"
@@ -230,7 +230,7 @@ func DataBaseInsert(id string) (err error) {
 		return err
 	}
 	defer db.Close()
-	Consumer, err := Flw.NewConsumer(id)
+	Consumer, err := flw.NewConsumer(id)
 	if err != nil {
 		return nil
 	}
@@ -313,7 +313,7 @@ func DataBaseFilePost(shortURL string, longURL string, token string) (err error)
 	if err != nil {
 		log.Fatal(err)
 	}
-	Producer, err := Flw.NewProducer(fileName)
+	Producer, err := flw.NewProducer(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -322,7 +322,7 @@ func DataBaseFilePost(shortURL string, longURL string, token string) (err error)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
+	var events = []*flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
 		log.Fatal(err)
@@ -492,7 +492,7 @@ func DataBaseDeleteURL(longURL string, token string) (err error) {
 
 }
 
-func DataBaseDeleteURLs(ids Flw.DeleteList, token string) (err error) {
+func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 	var wg sync.WaitGroup
 	for _, produceItem := range ids {
 
