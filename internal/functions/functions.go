@@ -348,10 +348,11 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		var token string
-		token, err = cks.GetCookieHandler(res, req)
+		//var token string
+		token, err := cks.GetCookieHandler(res, req)
 		if err != nil {
-			token, err := ath.BuildJWTString()
+			token, err = ath.BuildJWTString()
+			fmt.Println("This must be token", token)
 			if err != nil {
 				res.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(res, "Error on the side")
@@ -362,7 +363,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			//_, err = http.Get(apiRunAddr + "/" + "get")
 			_ = cks.SetCookieHandler(res, req, token)
 		} else {
-			_, err = req.Cookie("exampleCookie")
+			cks_tmp, err := req.Cookie("exampleCookie")
 			if err != nil {
 				res.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(res, "Error on the side")
@@ -370,8 +371,9 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 					log.Fatal(err)
 				}
 			}
+			token = cks_tmp.Value
 		}
-		token, _ = cks.GetCookieHandler(res, req)
+		//token = cks_tmp.
 		fmt.Println("JAYSON TOKEN ", token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
