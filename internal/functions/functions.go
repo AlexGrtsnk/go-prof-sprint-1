@@ -120,6 +120,30 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		//token, err := cks.GetCookieHandler(w, r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		rReader, err := io.ReadAll(reader)
+		if err != nil {
+			log.Fatal(err)
+		}
+		longURL := string(rReader)
+		fmt.Println("This is long url always:   ", longURL)
+		kol := 0
+		if longURL == "" {
+			fmt.Println("we are here")
+			token, err := ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(w, r, token)
+			return
+
+		}
 		var cks_tmp *http.Cookie
 		resp, _ := http.Get(apiRunAddr + "/" + "set")
 		for _, ck := range resp.Cookies() {
@@ -140,24 +164,6 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		//_, err = http.Get(apiRunAddr + "/" + "get")
 		_ = cks.SetCookieHandler(w, r, token)
 
-		rReader, err := io.ReadAll(reader)
-		if err != nil {
-			log.Fatal(err)
-		}
-		longURL := string(rReader)
-		fmt.Println("This is long url always:   ", longURL)
-		kol := 0
-		if longURL == "" {
-			//http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
-			fmt.Println("we are here")
-			token, err := ath.BuildJWTString()
-			if err != nil {
-				kol += 1
-			}
-			cks.SetCookieHandler(w, r, token)
-			return
-
-		}
 		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
