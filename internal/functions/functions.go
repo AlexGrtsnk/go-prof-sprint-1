@@ -127,6 +127,20 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 		}
+		var cks_tmp *http.Cookie
+		_, err = cks.GetCookieHandler(w, r)
+		if err != nil {
+			token, err := ath.BuildJWTString()
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			//_, err = http.Get(apiRunAddr + "/" + "get")
+			cks_tmp = cks.SetCookieHandler(w, r, token)
+		}
 		rReader, err := io.ReadAll(reader)
 		if err != nil {
 			log.Fatal(err)
@@ -163,20 +177,6 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			}
 			token := cks_tmp.Value
 		*/
-		var cks_tmp *http.Cookie
-		_, err = cks.GetCookieHandler(w, r)
-		if err != nil {
-			token, err := ath.BuildJWTString()
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				_, err = io.WriteString(w, "Error on the side")
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			//_, err = http.Get(apiRunAddr + "/" + "get")
-			cks_tmp = cks.SetCookieHandler(w, r, token)
-		}
 
 		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
 		if err != nil {
