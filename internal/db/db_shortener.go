@@ -469,7 +469,7 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 	for rows.Next() {
 		fmt.Println("help me please2")
 		answ := new(AnswerBatch)
-		err = rows.Scan(&answ.ShortURL, &answ.LongURL)
+		err = rows.Scan(&answ.ShortURL, &answ.OriginalURL)
 		if err != nil {
 			fmt.Println("help me please")
 			return nil, err
@@ -481,7 +481,7 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 		answ.ShortURL = apiRunAddr + "/" + answ.ShortURL
 		answb = append(answb, *answ)
 		flag = 1
-		fmt.Println("help me please4   ", answ.LongURL)
+		fmt.Println("help me please4   ", answ.OriginalURL)
 	}
 	if flag == 0 {
 		return nil, nil
@@ -527,6 +527,6 @@ func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
 }
 
 type AnswerBatch struct {
-	ShortURL string `json:"short_url"`
-	LongURL  string `json:"OriginalURL"`
+	ShortURL    string `json:"ShortURL"`
+	OriginalURL string `json:"OriginalURL"`
 }

@@ -605,7 +605,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			fmt.Println("qwerty hfgfs   ", klnm)
 			//nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
 			//nsw.ShortURL = "http://localhost:8080/WZA68n"
-			klnm[len(klnm)-1].LongURL = "aaa"
+			klnm[len(klnm)-1].OriginalURL = "aaa"
 			klnm[len(klnm)-1].ShortURL = "bbb"
 			klnnm = append(klnnm, klnm[len(klnm)-1])
 			//tmp[0] = append(tmp[0], nsw)
