@@ -107,25 +107,6 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("SADWEQE, ", token)
 		//token = "aaaa"
 	*/
-	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
-	resp, err := http.Get(apiRunAddr + "/" + "set")
-	//_, err = http.Get(apiRunAddr + "/" + "get")
-	var cks_tmp *http.Cookie
-	for _, ck := range resp.Cookies() {
-		if ck.Name == "exampleCookie" {
-			cks_tmp = ck
-		}
-	}
-	//http.SetCookie(w, cks_tmp)
-	fmt.Println(cks_tmp)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = io.WriteString(w, "Error on the side")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	_ = cks.SetCookieHandler(w, r, cks_tmp.Value)
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -135,6 +116,26 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if r.Method == http.MethodPost {
+		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
+		resp, err := http.Get(apiRunAddr + "/" + "set")
+		//_, err = http.Get(apiRunAddr + "/" + "get")
+		var cks_tmp *http.Cookie
+		for _, ck := range resp.Cookies() {
+			if ck.Name == "exampleCookie" {
+				cks_tmp = ck
+			}
+		}
+		//http.SetCookie(w, cks_tmp)
+		fmt.Println(cks_tmp)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		_ = cks.SetCookieHandler(w, r, cks_tmp.Value)
+
 		rReader, err := io.ReadAll(reader)
 		if err != nil {
 			log.Fatal(err)
@@ -210,31 +211,6 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
-	token, err := cks.GetCookieHandler(res, req)
-	kol := 0
-	if err != nil {
-		kol += 1
-	}
-	var cks_tmp *http.Cookie
-	for _, ck := range req.Cookies() {
-		if ck.Name == "exampleCookie" {
-			cks_tmp = ck
-		}
-	}
-	http.SetCookie(res, cks_tmp)
-	fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
-	fmt.Println("token1 :", token)
-	errr := ath.GetUserID(token)
-	if errr == -1 {
-		token, err = ath.BuildJWTString()
-		if err != nil {
-			kol += 1
-		}
-		cks.SetCookieHandler(res, req, token)
-	}
-	_ = cks.SetCookieHandler(res, req, token)
-	fmt.Println("token1 :", token)
-	fmt.Println("token :", kol)
 	//token = "aaaa"
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
@@ -273,11 +249,37 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if req.Method == http.MethodPost {
+		token, err := cks.GetCookieHandler(res, req)
+		kol := 0
+		if err != nil {
+			kol += 1
+		}
+		var cks_tmp *http.Cookie
+		for _, ck := range req.Cookies() {
+			if ck.Name == "exampleCookie" {
+				cks_tmp = ck
+			}
+		}
+		http.SetCookie(res, cks_tmp)
+		fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
+		fmt.Println("token1 :", token)
+		errr := ath.GetUserID(token)
+		if errr == -1 {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(res, req, token)
+		}
+		_ = cks.SetCookieHandler(res, req, token)
+		fmt.Println("token1 :", token)
+		fmt.Println("token :", kol)
+
 		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db.DataBaseDownloadFullURLPagePost(id, longURL, token)
+		err = db.DataBaseDownloadFullURLPagePost(id, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
