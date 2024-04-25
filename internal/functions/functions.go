@@ -53,7 +53,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		var cks_tmp *http.Cookie
+		var cookiesTmp *http.Cookie
 		_, err = cks.GetCookieHandler(w, r)
 		if err != nil {
 			token, err := ath.BuildJWTString()
@@ -65,9 +65,9 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			//_, err = http.Get(apiRunAddr + "/" + "get")
-			cks_tmp = cks.SetCookieHandler(w, r, token)
+			cookiesTmp = cks.SetCookieHandler(w, r, token)
 		} else {
-			cks_tmp, err = r.Cookie("exampleCookie")
+			cookiesTmp, err = r.Cookie("exampleCookie")
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(w, "Error on the side")
@@ -97,15 +97,15 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 
 		}
 		/*
-			var cks_tmp *http.Cookie
+			var cookiesTmp *http.Cookie
 			resp, _ := http.Get(apiRunAddr + "/" + "set")
 			for _, ck := range resp.Cookies() {
 				if ck.Name == "exampleCookie" {
-					cks_tmp = ck
+					cookiesTmp = ck
 				}
 			}
-			//http.SetCookie(w, cks_tmp)
-			fmt.Println(cks_tmp)
+			//http.SetCookie(w, cookiesTmp)
+			fmt.Println(cookiesTmp)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(w, "Error on the side")
@@ -113,7 +113,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 					log.Fatal(err)
 				}
 			}
-			token := cks_tmp.Value
+			token := cookiesTmp.Value
 		*/
 
 		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
@@ -154,8 +154,8 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Before request4")
 			//w.Cookies()
 			//cookiesTemp, _ := r.Cookie("exampleCookie")
-			fmt.Println("Before request5: ", cks_tmp)
-			request.AddCookie(cks_tmp)
+			fmt.Println("Before request5: ", cookiesTmp)
+			request.AddCookie(cookiesTmp)
 			fmt.Println("Before request")
 			_, err = client.Do(request)
 			fmt.Println("After request")
@@ -315,7 +315,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			//_, err = http.Get(apiRunAddr + "/" + "get")
 			_ = cks.SetCookieHandler(res, req, token)
 		} else {
-			cks_tmp, err := req.Cookie("exampleCookie")
+			cookiesTmp, err := req.Cookie("exampleCookie")
 			if err != nil {
 				res.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(res, "Error on the side")
@@ -323,9 +323,9 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 					log.Fatal(err)
 				}
 			}
-			token = cks_tmp.Value
+			token = cookiesTmp.Value
 		}
-		//token = cks_tmp.
+		//token = cookiesTmp.
 		fmt.Println("JAYSON TOKEN ", token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -477,7 +477,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			//_, err = http.Get(apiRunAddr + "/" + "get")
 			_ = cks.SetCookieHandler(res, req, token)
 		} else {
-			cks_tmp, err := req.Cookie("exampleCookie")
+			cookiesTmp, err := req.Cookie("exampleCookie")
 			if err != nil {
 				res.WriteHeader(http.StatusBadRequest)
 				_, err = io.WriteString(res, "Error on the side")
@@ -485,7 +485,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 					log.Fatal(err)
 				}
 			}
-			token = cks_tmp.Value
+			token = cookiesTmp.Value
 		}
 
 		var newProduceItems Flw.ProduceList
