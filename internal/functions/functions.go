@@ -117,26 +117,24 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
-		token, err := cks.GetCookieHandler(w, r)
+		//token, err := cks.GetCookieHandler(w, r)
 		var cks_tmp *http.Cookie
-		if err != nil {
-			resp, _ := http.Get(apiRunAddr + "/" + "set")
-			for _, ck := range resp.Cookies() {
-				if ck.Name == "exampleCookie" {
-					cks_tmp = ck
-				}
+		resp, _ := http.Get(apiRunAddr + "/" + "set")
+		for _, ck := range resp.Cookies() {
+			if ck.Name == "exampleCookie" {
+				cks_tmp = ck
 			}
-			//http.SetCookie(w, cks_tmp)
-			fmt.Println(cks_tmp)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				_, err = io.WriteString(w, "Error on the side")
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			token = cks_tmp.Value
 		}
+		//http.SetCookie(w, cks_tmp)
+		fmt.Println(cks_tmp)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		token := cks_tmp.Value
 		//_, err = http.Get(apiRunAddr + "/" + "get")
 		_ = cks.SetCookieHandler(w, r, token)
 
