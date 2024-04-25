@@ -583,6 +583,9 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		kol := 0
 		var klnm []db.AnswerBatch
 		klnm, err = db.DataBaseGetAllURLs(token)
+		var nsw NewAnser
+		nsw.OriginalURL = klnm[len(klnm)-1].LongURL
+		nsw.ShortURL = klnm[len(klnm)-1].ShortURL
 		//token := "aaaa"
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -598,7 +601,8 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		} else {
 			res.WriteHeader(http.StatusOK)
 			fmt.Println("qwerty hfgfs   ", klnm)
-			if err := json.NewEncoder(res).Encode(klnm); err != nil {
+			fmt.Println("qwerty hfgfs   sadasdad  ", nsw)
+			if err := json.NewEncoder(res).Encode(nsw); err != nil {
 				log.Panic(err)
 			}
 			fmt.Println("HEEEEEELP   ,", res)
@@ -755,6 +759,10 @@ type Answer struct {
 type AnswerBatch struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
+}
+type NewAnser struct {
+	ShortURL    string `json:"ShortURL"`
+	OriginalURL string `json:"OriginalURL"`
 }
 
 func jsonHandler() http.Handler {
