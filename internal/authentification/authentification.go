@@ -17,17 +17,6 @@ type Claims struct {
 const tokenExp = time.Hour * 3
 const secretKey = "supersecretkey"
 
-/*
-func main() {
-	tokenString, err := BuildJWTString()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(tokenString)
-}
-*/
-
 func GetUserID(tokenString string) int {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
@@ -46,7 +35,7 @@ func GetUserID(tokenString string) int {
 		return -1
 	}
 
-	fmt.Println("Token os valid")
+	fmt.Println("Token is valid")
 	return claims.UserID
 }
 

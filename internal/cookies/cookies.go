@@ -43,7 +43,5 @@ func GetCookieHandler(w http.ResponseWriter, r *http.Request) (token string, err
 	if err != nil {
 		return "", err
 	}
-	//value = cookie.Value
-	//fmt.Println("valuie of cookie inside ", value)
 	return cookie.Value, nil
 }

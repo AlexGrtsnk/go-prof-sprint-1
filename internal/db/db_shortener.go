@@ -148,17 +148,9 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (e
 	}
 	defer db.Close()
 	quer := `INSERT INTO short_longURL(short_url, longURL, token) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + token + `')`
-	//quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + token[:10] + `')`
-	//quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + token[:10] + `')`
 
-	//quer := "INSERT INTO short_longURL(short_url, longURL, token) VALUES ('qwe', 'qwe1', 'qwe2')"
-	//quer := "INSERT INTO short_longURL VALUES (1, 'qwe12', 'qwe', 'qwe1')"
-	//quer := `INSERT INTO short_longURL(short_url, longURL, token) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + string(id) + `')`
-	//quer := "INSERT INTO short_longURL(short_url, longURL) VALUES('" + string(id) + "', '" + string("dasda") + "');"
-	fmt.Println(quer)
 	_, err = db.Exec(quer)
 	if err != nil {
-		fmt.Println("adsadasdasdawdawdawe")
 		return err
 	}
 	return nil
@@ -177,7 +169,6 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 	}
 	defer db.Close()
 	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
-	fmt.Println(quer)
 	_, err = db.Exec(quer)
 	if err != nil {
 		return err
@@ -299,9 +290,7 @@ func DataBaseJSONPage(shortURL string, longURL string, token string) (b int, err
 		return 0, err
 	}
 	defer db.Close()
-	//quer := "SELECT id FROM short_longURL WHERE short_url = '" + string(shortURL) + "' and longURL ='" + longURL + "' and token = '" + token + "';"
 	quer := "SELECT id FROM short_longURL WHERE short_url = '" + string(shortURL) + "' and longURL ='" + longURL + "';"
-	fmt.Println(quer)
 	rows, err := db.Query(quer)
 	if err != nil {
 		return 0, err
@@ -333,7 +322,6 @@ func DataBaseFilePost(shortURL string, longURL string, token string) (err error)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("12344, ", token)
 	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
@@ -464,24 +452,19 @@ func DataBaseGetAllURLs(token string) (answb []AnswerBatch, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("help me please1  ", quer)
 	flag := 0
 	for rows.Next() {
-		fmt.Println("help me please2")
 		answ := new(AnswerBatch)
 		err = rows.Scan(&answ.ShortURL, &answ.OriginalURL)
 		if err != nil {
-			fmt.Println("help me please")
 			return nil, err
 		}
 		if rows.Err() != nil {
-			fmt.Println("help me please")
 			return nil, rows.Err()
 		}
 		answ.ShortURL = apiRunAddr + "/" + answ.ShortURL
 		answb = append(answb, *answ)
 		flag = 1
-		fmt.Println("help me please4   ", answ.OriginalURL)
 	}
 	if flag == 0 {
 		return nil, nil
@@ -500,14 +483,11 @@ func DataBaseDeleteURL(longURL string, token string) (err error) {
 	if err != nil {
 		return err
 	}
-	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = '" + longURL + "' and token = '" + token + "';" // "' and token = '" + token +
-	fmt.Println("THIS IS ION COROUTINE: ", longURL)
+	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = '" + longURL + "' and token = '" + token + "';"
 	_, err = db.Exec(quer)
-	fmt.Println("SOMETHING HAPPENED", quer)
 	if err != nil {
 		return err
 	}
-	fmt.Println("SOMETHING HAPPENED")
 	return nil
 
 }
@@ -559,6 +539,5 @@ func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
 	if err != nil {
 		return 1, err
 	}
-	fmt.Println("flag inside function must be 1")
 	return flag, nil
 }
