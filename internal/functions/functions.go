@@ -584,6 +584,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		var klnm []db.AnswerBatch
 		klnm, err = db.DataBaseGetAllURLs(token)
 		var nsw NewAnser
+		var klnnm []db.AnswerBatch
 		//var tmp []NewAnser
 		//nsw.OriginalURL = klnm[len(klnm)-1].LongURL
 		//nsw.ShortURL = klnm[len(klnm)-1].ShortURL
@@ -602,11 +603,12 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		} else {
 			res.WriteHeader(http.StatusOK)
 			fmt.Println("qwerty hfgfs   ", klnm)
-			nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
-			nsw.ShortURL = "http://localhost:8080/WZA68n"
+			//nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
+			//nsw.ShortURL = "http://localhost:8080/WZA68n"
+			klnnm = append(klnnm, klnm[len(klnm)-1])
 			//tmp[0] = append(tmp[0], nsw)
 			//fmt.Println("qwerty hfgfs   sadasdad  ", tmp)
-			if err := json.NewEncoder(res).Encode(klnm); err != nil {
+			if err := json.NewEncoder(res).Encode(klnnm); err != nil {
 				log.Panic(err)
 			}
 			//fmt.Println("HEEEEEELP   ,", res)
