@@ -145,6 +145,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		longURL := string(rReader)
+		fmt.Println("This is long url always:   ", longURL)
 		kol := 0
 		if longURL == "" {
 			//http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
