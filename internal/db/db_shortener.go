@@ -500,7 +500,7 @@ func DataBaseDeleteURL(longURL string, tknm string) (err error) {
 	if err != nil {
 		return err
 	}
-	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = " + longURL + " and tknm = '" + tknm + "';"
+	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = " + longURL + "';" // " and tknm = '" + tknm +
 	fmt.Println("THIS IS ION COROUTINE: ", longURL)
 	_, err = db.Exec(quer)
 	if err != nil {
@@ -559,6 +559,6 @@ func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
 	if err != nil {
 		return 1, err
 	}
-
+	fmt.Println("flag inside function must be 1")
 	return flag, nil
 }
