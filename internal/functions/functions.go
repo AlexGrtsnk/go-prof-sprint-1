@@ -56,12 +56,14 @@ func setCookieHandler(w http.ResponseWriter, r *http.Request) {
 	// Write the cookie. If there is an error (due to an encoding failure or it
 	// being too long) then log the error and send a 500 Internal Server Error
 	// response.
-	err = cks.Write(w, cookie)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "server error", http.StatusInternalServerError)
-		return
-	}
+	http.SetCookie(w, &cookie)
+	/*
+		err = cks.Write(w, cookie)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+			return
+		}*/
 
 	//w.Write([]byte("cookie set!"))
 }

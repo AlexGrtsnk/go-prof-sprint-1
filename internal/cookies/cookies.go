@@ -3,6 +3,7 @@ package cookies
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -61,10 +62,13 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err 
 	// Write the cookie. If there is an error (due to an encoding failure or it
 	// being too long) then log the error and send a 500 Internal Server Error
 	// response.
-	err = Write(w, cookie)
-	if err != nil {
-		return err
-	}
+	http.SetCookie(w, &cookie)
+	/*
+		err = Write(w, cookie)
+		if err != nil {
+			return err
+		}
+	*/
 	return nil
 	//w.Write([]byte("cookie set!"))
 }
@@ -72,7 +76,7 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err 
 func GetCookieHandler(w http.ResponseWriter, r *http.Request) (value string, err error) {
 	// Use the Read() function to retrieve the cookie value, additionally
 	// checking for the ErrInvalidValue error and handling it as necessary.
-	value, err = Read(r, "exampleCookie")
+	cookie, err := r.Cookie("exampleCookie")
 	if err != nil {
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
@@ -86,5 +90,7 @@ func GetCookieHandler(w http.ResponseWriter, r *http.Request) (value string, err
 		}
 		return
 	}
+	value = cookie.Value
+	fmt.Println("valuie of cookie inside ", value)
 	return value, nil
 }
