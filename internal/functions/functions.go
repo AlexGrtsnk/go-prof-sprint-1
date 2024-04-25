@@ -371,7 +371,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 				}
 			}
 		}
-		//token, err = cks.GetCookieHandler(res, req)
+		token, _ = cks.GetCookieHandler(res, req)
 		fmt.Println("JAYSON TOKEN ", token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
