@@ -534,51 +534,6 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set("Content-Type", "application/json")
-	/*
-		token, err := cks.GetCookieHandler(res, req)
-		var a Flw.DeleteList
-		var b Flw.DeleteURL
-		var c Flw.DeleteURL
-		b.CorrelationID = 1
-		a = append(a, b)
-		c.CorrelationID = 2
-		a = append(a, c)
-		db.DataBaseDeleteURLs(a, "aaaa")
-		if err != nil {
-			log.Panic(err)
-		}
-	*/
-	if req.Method == http.MethodPost {
-		token, err := cks.GetCookieHandler(res, req)
-		kol := 0
-		if err != nil {
-			kol += 1
-		}
-		var cks_tmp *http.Cookie
-		for _, ck := range req.Cookies() {
-			if ck.Name == "exampleCookie" {
-				cks_tmp = ck
-			}
-		}
-		http.SetCookie(res, cks_tmp)
-		fmt.Println("HERE TEORETICALLY MUST BE COOKIE in fucn ", cks_tmp)
-		fmt.Println("token1 in func :", token)
-		errr := ath.GetUserID(token)
-		if errr == -1 {
-			token, err = ath.BuildJWTString()
-			if err != nil {
-				kol += 1
-			}
-			cks.SetCookieHandler(res, req, token)
-		}
-		_ = cks.SetCookieHandler(res, req, token)
-		fmt.Println("token1 in func:", token)
-		fmt.Println("token : in func ", kol)
-		return
-
-	}
-
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
 		fmt.Println("What cookies are send????????????", token)
@@ -586,15 +541,9 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		kol := 0
-		var klnm []db.AnswerBatch
-		klnm, err = db.DataBaseGetAllURLs(token)
-		//var nsw NewAnser
-		var klnnm []db.AnswerBatch
-		//var tmp []NewAnser
-		//nsw.OriginalURL = klnm[len(klnm)-1].LongURL
-		//nsw.ShortURL = klnm[len(klnm)-1].ShortURL
-		//token := "aaaa"
+		var userURLs []db.AnswerBatch
+		userURLs, err = db.DataBaseGetAllURLs(token)
+		var tmpURLs []db.AnswerBatch
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -602,40 +551,19 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		if klnm == nil {
+		if userURLs == nil {
 			res.WriteHeader(http.StatusNoContent)
 			return
 
 		} else {
+			res.Header().Set("Content-Type", "application/json")
 			res.WriteHeader(http.StatusOK)
-			fmt.Println("qwerty hfgfs   ", klnm)
-			//nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
-			//nsw.ShortURL = "http://localhost:8080/WZA68n"
-			//klnm[len(klnm)-1].OriginalURL = "aaa"
-			//klnm[len(klnm)-1].ShortURL = "bbb"
-			klnnm = append(klnnm, klnm[len(klnm)-1])
-			//tmp[0] = append(tmp[0], nsw)
-			//fmt.Println("qwerty hfgfs   sadasdad  ", tmp)
-			if err := json.NewEncoder(res).Encode(klnnm); err != nil {
+			tmpURLs = append(tmpURLs, userURLs[len(userURLs)-1])
+			if err := json.NewEncoder(res).Encode(tmpURLs); err != nil {
 				log.Panic(err)
 			}
-			//fmt.Println("HEEEEEELP   ,", res)
 			return
 		}
-		fmt.Println("HEEEEEELP   ,", klnm)
-		errr := ath.GetUserID(token)
-		if errr != -1 {
-			res.WriteHeader(http.StatusNoContent)
-			return
-		}
-		if errr == -1 {
-			token, err = ath.BuildJWTString()
-			if err != nil {
-				kol += 1
-			}
-			cks.SetCookieHandler(res, req, token)
-		}
-		res.WriteHeader(http.StatusAccepted)
 	}
 	if req.Method == http.MethodDelete {
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
