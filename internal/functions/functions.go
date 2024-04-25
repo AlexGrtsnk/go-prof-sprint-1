@@ -584,7 +584,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		var klnm []db.AnswerBatch
 		klnm, err = db.DataBaseGetAllURLs(token)
 		var nsw NewAnser
-		var tmp []NewAnser
+		//var tmp []NewAnser
 		//nsw.OriginalURL = klnm[len(klnm)-1].LongURL
 		//nsw.ShortURL = klnm[len(klnm)-1].ShortURL
 		//token := "aaaa"
