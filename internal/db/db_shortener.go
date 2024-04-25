@@ -464,7 +464,7 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("help me please1")
+	fmt.Println("help me please1  ", quer)
 	flag := 0
 	for rows.Next() {
 		fmt.Println("help me please2")
@@ -481,11 +481,11 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 		answ.ShortURL = apiRunAddr + "/" + answ.ShortURL
 		answb = append(answb, *answ)
 		flag = 1
+		fmt.Println("help me please4   ", answ.LongURL)
 	}
 	if flag == 0 {
 		return nil, nil
 	}
-	fmt.Println("help me please4")
 	return
 }
 
