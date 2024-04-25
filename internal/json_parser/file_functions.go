@@ -24,9 +24,11 @@ type ProduceURL struct {
 }
 type ProduceList []ProduceURL
 
+/*
 type DeleteURL struct {
 	ShortURL string `json:"-"`
-}
+}*/
+type DeleteURL string
 type DeleteList []DeleteURL
 
 func NewProducer(fileName string) (*Producer, error) {

@@ -514,8 +514,10 @@ func DataBaseDeleteURL(longURL string, tknm string) (err error) {
 func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
 	var wg sync.WaitGroup
 	for _, produceItem := range ids {
+
 		wg.Add(1)
-		a := produceItem.ShortURL
+		var a string
+		a = string(produceItem)
 		go func(a string) (err error) {
 			err = DataBaseDeleteURL(a, tknm)
 			wg.Done()
