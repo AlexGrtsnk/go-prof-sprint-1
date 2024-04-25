@@ -90,25 +90,6 @@ func getCookieHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
-	/*
-		token, err := cks.GetCookieHandler(w, r)
-		kol := 0
-		if err != nil {
-			kol += 1
-		}
-		fmt.Println("THIS IS TOKEN : ", token, kol)
-		errr := ath.GetUserID(token)
-		if errr == -1 {
-			token, err = ath.BuildJWTString()
-			if err != nil {
-				kol += 1
-			}
-			cks.SetCookieHandler(w, r, token)
-		}
-		token, _ = cks.GetCookieHandler(w, r)
-		fmt.Println("SADWEQE, ", token)
-		//token = "aaaa"
-	*/
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -119,7 +100,6 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
-		//token, err := cks.GetCookieHandler(w, r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(w, "Error on the side")
@@ -310,28 +290,6 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			kol += 1
 		}
-		/*
-			var cks_tmp *http.Cookie
-			for _, ck := range req.Cookies() {
-				if ck.Name == "exampleCookie" {
-					cks_tmp = ck
-				}
-			}
-			http.SetCookie(res, cks_tmp)
-			fmt.Println("HERE TEORETICALLY MUST BE COOKIE ", cks_tmp)
-			fmt.Println("token1 :", token)
-			errr := ath.GetUserID(token)
-			if errr == -1 {
-				token, err = ath.BuildJWTString()
-				if err != nil {
-					kol += 1
-				}
-				cks.SetCookieHandler(res, req, token)
-			}
-			_ = cks.SetCookieHandler(res, req, token)
-			fmt.Println("token1 :", token)
-			fmt.Println("token :", kol)
-		*/
 		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
 		vars := mux.Vars(req)
@@ -371,7 +329,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			cks.SetCookieHandler(res, req, token)
 		}
 	*/
-	token := "aaa"
+	//token := "aaa"
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		if err != nil {
@@ -390,6 +348,38 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 
+		var token string
+		token, err = cks.GetCookieHandler(res, req)
+		if err != nil {
+			token, err := ath.BuildJWTString()
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			//_, err = http.Get(apiRunAddr + "/" + "get")
+			_ = cks.SetCookieHandler(res, req, token)
+		} else {
+			_, err = req.Cookie("exampleCookie")
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+		//token, err = cks.GetCookieHandler(res, req)
+		fmt.Println("JAYSON TOKEN ", token)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		var ques Question
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
