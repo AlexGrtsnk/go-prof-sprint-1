@@ -532,3 +532,33 @@ type AnswerBatch struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return 1, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return 1, err
+	}
+	defer db.Close()
+	quer := "SELECT delFlag FROM short_longURL where short_url='" + shortURL + "';"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return 1, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return 1, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&flag)
+	if err != nil {
+		return 1, err
+	}
+
+	return flag, nil
+}

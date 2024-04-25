@@ -237,6 +237,19 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
+		//flag = 0
+		flag, err := db.DataBaseCheckURLDelition(id)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if flag == 1 {
+			res.WriteHeader(http.StatusGone)
+			return
+		}
 		longURL, flag, err := db.DatBaseDownloadFullURLPageGet(id)
 		if err != nil {
 			if id == "ping" {
