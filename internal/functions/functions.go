@@ -512,7 +512,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 }
 
 func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set("Content-Type", "application/json")
+	//res.Header().Set("Content-Type", "application/json")
 	/*
 		token, err := cks.GetCookieHandler(res, req)
 		var a Flw.DeleteList
@@ -553,12 +553,13 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		_ = cks.SetCookieHandler(res, req, token)
 		fmt.Println("token1 in func:", token)
 		fmt.Println("token : in func ", kol)
+		return
 
 	}
 
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
-		fmt.Println("What cookies are send????????????", token)
+		fmt.Println("What cookies are send????????????", req.Method)
 		if err != nil {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
