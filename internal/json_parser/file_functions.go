@@ -25,7 +25,7 @@ type ProduceURL struct {
 type ProduceList []ProduceURL
 
 type DeleteURL struct {
-	CorrelationID int `json:"correlation_id"`
+	ShortURL string `json:"short_url"`
 }
 type DeleteList []DeleteURL
 

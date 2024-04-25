@@ -489,7 +489,7 @@ func DataBaseGetAllURLs(tknm string) (answb []AnswerBatch, err error) {
 	return
 }
 
-func DataBaseDeleteURL(longURL int, tknm string) (err error) {
+func DataBaseDeleteURL(longURL string, tknm string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -500,7 +500,7 @@ func DataBaseDeleteURL(longURL int, tknm string) (err error) {
 	if err != nil {
 		return err
 	}
-	quer := "UPDATE short_longURL SET delFlag=1 WHERE id = " + fmt.Sprint(longURL) + " and tknm = '" + tknm + "';"
+	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = " + longURL + " and tknm = '" + tknm + "';"
 	fmt.Println("THIS IS ION COROUTINE: ", longURL)
 	_, err = db.Exec(quer)
 	if err != nil {
@@ -515,8 +515,8 @@ func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
 	var wg sync.WaitGroup
 	for _, produceItem := range ids {
 		wg.Add(1)
-		a := produceItem.CorrelationID
-		go func(a int) (err error) {
+		a := produceItem.ShortURL
+		go func(a string) (err error) {
 			err = DataBaseDeleteURL(a, tknm)
 			wg.Done()
 			return err
