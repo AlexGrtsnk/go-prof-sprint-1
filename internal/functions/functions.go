@@ -157,7 +157,11 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Before request5: ", cookiesTmp)
 			request.AddCookie(cookiesTmp)
 			fmt.Println("Before request")
-			_, err = client.Do(request)
+			resp, err := client.Do(request)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+			}
+			defer resp.Body.Close()
 			fmt.Println("After request")
 			if err != nil {
 				log.Fatal(err)
