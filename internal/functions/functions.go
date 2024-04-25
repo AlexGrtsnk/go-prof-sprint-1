@@ -651,10 +651,17 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
+		token, err := cks.GetCookieHandler(res, req)
+		fmt.Println("What cookies are send????????????", token)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		//kol := 0
 		//var tempItems []AnswerBatch
 		res.Header().Set("Content-Type", "application/json")
-		res.WriteHeader(http.StatusCreated)
-		db.DataBaseDeleteURLs(newProduceItems, "aaaa")
+		res.WriteHeader(http.StatusAccepted)
+		db.DataBaseDeleteURLs(newProduceItems, token)
 		/*
 			for idx, produceItem := range newProduceItems {
 				if len(produceItem.OriginalURL) <= 0 {
