@@ -437,7 +437,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			cks.SetCookieHandler(res, req, token)
 		}
 	*/
-	token := "aaaa"
+	//token := "aaaa"
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -455,6 +455,31 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+		}
+		var token string
+		_, err = cks.GetCookieHandler(res, req)
+		if err != nil {
+			token, err = ath.BuildJWTString()
+			fmt.Println("This must be token", token)
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			//_, err = http.Get(apiRunAddr + "/" + "get")
+			_ = cks.SetCookieHandler(res, req, token)
+		} else {
+			cks_tmp, err := req.Cookie("exampleCookie")
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			token = cks_tmp.Value
 		}
 
 		var newProduceItems Flw.ProduceList
