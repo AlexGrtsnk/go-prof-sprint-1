@@ -47,9 +47,9 @@ func setCookieHandler(w http.ResponseWriter, r *http.Request) {
 		Name:     "exampleCookie",
 		Value:    token,
 		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   true,
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -141,8 +141,17 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		longURL := string(rReader)
+		kol := 0
 		if longURL == "" {
-			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
+			//http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
+			fmt.Println("we are here")
+			token, err := ath.BuildJWTString()
+			if err != nil {
+				kol += 1
+			}
+			cks.SetCookieHandler(w, r, token)
+			return
+
 		}
 		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
 		if err != nil {

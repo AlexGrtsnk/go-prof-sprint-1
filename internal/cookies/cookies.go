@@ -52,9 +52,9 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, tknm string) (err 
 		Name:     "exampleCookie",
 		Value:    tknm,
 		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   true,
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
