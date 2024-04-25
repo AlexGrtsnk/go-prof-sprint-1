@@ -9,7 +9,7 @@ type Event struct {
 	ID       int    `json:"id"`
 	ShortURL string `json:"short_url"`
 	LongURL  string `json:"longURL"`
-	Tknm     string `json:"tknm"`
+	Token    string `json:"token"`
 	DelFlag  int    `json:"delFlag"`
 }
 
@@ -25,9 +25,10 @@ type ProduceURL struct {
 type ProduceList []ProduceURL
 
 /*
-type DeleteURL struct {
-	ShortURL string `json:"-"`
-}*/
+	type DeleteURL struct {
+		ShortURL string `json:"-"`
+	}
+*/
 type DeleteURL string
 type DeleteList []DeleteURL
 
