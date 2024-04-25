@@ -3,7 +3,6 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,7 +11,8 @@ import (
 
 	apcfg "go-prof-sprint-1/internal/app_config"
 	ath "go-prof-sprint-1/internal/authentification"
-	"go-prof-sprint-1/internal/cookies"
+
+	//"go-prof-sprint-1/internal/cookies"
 	cks "go-prof-sprint-1/internal/cookies"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
@@ -33,60 +33,6 @@ func generateShortKey() string {
 		shortKey[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(shortKey)
-}
-
-func setCookieHandler(w http.ResponseWriter, r *http.Request) {
-	// Initialize the cookie as normal.
-	//errr := ath.GetUserID(token)
-	token, err := ath.BuildJWTString()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cookie := http.Cookie{
-		Name:     "exampleCookie",
-		Value:    token,
-		Path:     "/",
-		MaxAge:   0,
-		HttpOnly: false,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	// Write the cookie. If there is an error (due to an encoding failure or it
-	// being too long) then log the error and send a 500 Internal Server Error
-	// response.
-	http.SetCookie(w, &cookie)
-	/*
-		err = cks.Write(w, cookie)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
-			return
-		}*/
-
-	//w.Write([]byte("cookie set!"))
-}
-
-func getCookieHandler(w http.ResponseWriter, r *http.Request) {
-	// Use the Read() function to retrieve the cookie value, additionally
-	// checking for the ErrInvalidValue error and handling it as necessary.
-	value, err := cks.Read(r, "exampleCookie")
-	fmt.Println("VALUE OF COOKIE INSIDE", value)
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			http.Error(w, "cookie not found", http.StatusBadRequest)
-		case errors.Is(err, cookies.ErrInvalidValue):
-			http.Error(w, "invalid cookie", http.StatusBadRequest)
-		default:
-			log.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
-		}
-		return
-	}
-
-	//w.Write([]byte(value))
 }
 
 func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
@@ -348,8 +294,8 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		//var token string
-		token, err := cks.GetCookieHandler(res, req)
+		var token string
+		_, err = cks.GetCookieHandler(res, req)
 		if err != nil {
 			token, err = ath.BuildJWTString()
 			fmt.Println("This must be token", token)
@@ -778,8 +724,6 @@ func Run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
 	mux1 := mux.NewRouter()
-	mux1.HandleFunc(`/set`, setCookieHandler)
-	mux1.HandleFunc(`/get`, getCookieHandler)
 	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
