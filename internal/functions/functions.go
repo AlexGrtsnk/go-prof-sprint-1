@@ -634,7 +634,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodDelete {
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
 		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
+			res.WriteHeader(http.StatusConflict)
 			_, err = io.WriteString(res, "Error on the side")
 			if err != nil {
 				log.Fatal(err)
@@ -644,11 +644,11 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadGateway)
 			return
 		}
 		if err = json.Unmarshal(buf.Bytes(), &newProduceItems); err != nil {
-			http.Error(res, err.Error(), http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusForbidden)
 			return
 		}
 		token, err := cks.GetCookieHandler(res, req)
