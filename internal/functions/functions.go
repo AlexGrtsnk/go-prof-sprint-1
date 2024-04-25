@@ -574,15 +574,14 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		var newProduceItems Flw.DeleteList
+		var newDelitionItems Flw.DeleteList
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadGateway)
 			return
 		}
-		fmt.Println("this is in delete ", buf.String())
-		if err = json.Unmarshal(buf.Bytes(), &newProduceItems); err != nil {
+		if err = json.Unmarshal(buf.Bytes(), &newDelitionItems); err != nil {
 			http.Error(res, err.Error(), http.StatusForbidden)
 			return
 		}
@@ -592,43 +591,9 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		//kol := 0
-		//var tempItems []AnswerBatch
 		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusAccepted)
-		db.DataBaseDeleteURLs(newProduceItems, token)
-		/*
-			for idx, produceItem := range newProduceItems {
-				if len(produceItem.OriginalURL) <= 0 {
-					errMsg := fmt.Sprintf("Item %d: Incorrect produce code sequence or product name. Example code sequence: A12T-4GH7-QPL9-3N4M", idx)
-					http.Error(res, errMsg, http.StatusBadRequest)
-					return
-				} else {
-					shortURL := generateShortKey()
-					err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL, token)
-					if err != nil {
-						res.WriteHeader(http.StatusBadRequest)
-						_, err = io.WriteString(res, "Error on the database side")
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					var answ AnswerBatch
-					answ.CorrelationID = produceItem.CorrelationID
-					answ.ShortURL = apiRunAddr + "/" + shortURL
-					tempItems = append(tempItems, answ)
-					err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL, token)
-					if err != nil {
-						res.WriteHeader(http.StatusBadRequest)
-						_, err = io.WriteString(res, "Error on the database side")
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-
-				}
-			}*/
-
+		db.DataBaseDeleteURLs(newDelitionItems, token)
 	}
 
 }
