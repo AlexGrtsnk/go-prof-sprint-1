@@ -602,8 +602,8 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		} else {
 			res.WriteHeader(http.StatusOK)
 			fmt.Println("qwerty hfgfs   ", klnm)
-			nsw.OriginalURL = "aaaa"
-			nsw.ShortURL = "bbbb"
+			nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
+			nsw.ShortURL = "http://localhost:8080/WZA68n"
 			tmp = append(tmp, nsw)
 			fmt.Println("qwerty hfgfs   sadasdad  ", tmp)
 			if err := json.NewEncoder(res).Encode(tmp); err != nil {
