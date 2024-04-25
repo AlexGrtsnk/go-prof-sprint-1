@@ -584,7 +584,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		var klnm []db.AnswerBatch
 		klnm, err = db.DataBaseGetAllURLs(token)
 		var nsw NewAnser
-		var tmp []NewAnser
+		var tmp [][]NewAnser
 		//nsw.OriginalURL = klnm[len(klnm)-1].LongURL
 		//nsw.ShortURL = klnm[len(klnm)-1].ShortURL
 		//token := "aaaa"
@@ -604,7 +604,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			fmt.Println("qwerty hfgfs   ", klnm)
 			nsw.OriginalURL = "http://qbshfnmlol7.yandex/k0hjhxgeuxcq/yjnmi9y3"
 			nsw.ShortURL = "http://localhost:8080/WZA68n"
-			tmp = append(tmp, nsw)
+			tmp[0] = append(tmp[0], nsw)
 			fmt.Println("qwerty hfgfs   sadasdad  ", tmp)
 			if err := json.NewEncoder(res).Encode(tmp); err != nil {
 				log.Panic(err)
