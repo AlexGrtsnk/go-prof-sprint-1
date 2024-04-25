@@ -528,5 +528,5 @@ func DataBaseDeleteURLs(ids Flw.DeleteList, tknm string) (err error) {
 
 type AnswerBatch struct {
 	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"long_url"`
+	OriginalURL string `json:"original_url"`
 }
