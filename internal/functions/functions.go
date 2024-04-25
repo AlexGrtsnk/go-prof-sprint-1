@@ -581,7 +581,8 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 		kol := 0
-		klnm, err := db.DataBaseGetAllURLs(token)
+		var klnm []db.AnswerBatch
+		klnm, err = db.DataBaseGetAllURLs(token)
 		//token := "aaaa"
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
@@ -595,7 +596,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 			return
 
 		} else {
-			res.WriteHeader(http.StatusCreated)
+			res.WriteHeader(http.StatusOK)
 			fmt.Println("qwerty hfgfs   ", klnm)
 			if err := json.NewEncoder(res).Encode(klnm); err != nil {
 				log.Panic(err)
