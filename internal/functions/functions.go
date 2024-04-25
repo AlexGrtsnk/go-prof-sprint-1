@@ -597,7 +597,7 @@ func GetConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 		} else {
 			res.WriteHeader(http.StatusCreated)
 			fmt.Println("qwerty hfgfs   ", klnm)
-			if err := json.NewEncoder(res).Encode(klnm); err != nil {
+			if err := json.NewEncoder(res).Encode(klnm[1]); err != nil {
 				log.Panic(err)
 			}
 			fmt.Println("HEEEEEELP   ,", res)
