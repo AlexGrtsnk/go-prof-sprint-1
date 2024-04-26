@@ -9,6 +9,8 @@ type Event struct {
 	ID       int    `json:"id"`
 	ShortURL string `json:"short_url"`
 	LongURL  string `json:"longURL"`
+	Token    string `json:"token"`
+	DelFlag  int    `json:"delFlag"`
 }
 
 type Producer struct {
@@ -21,6 +23,9 @@ type ProduceURL struct {
 	OriginalURL   string `json:"original_url"`
 }
 type ProduceList []ProduceURL
+
+type DeleteURL string
+type DeleteList []DeleteURL
 
 func NewProducer(fileName string) (*Producer, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)

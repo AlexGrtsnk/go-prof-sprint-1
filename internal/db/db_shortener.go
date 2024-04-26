@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 
 	bn "go-prof-sprint-1/internal/bindata"
 
-	Flw "go-prof-sprint-1/internal/json_parser"
+	flw "go-prof-sprint-1/internal/json_parser"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database"
@@ -135,7 +136,7 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 	return longURL, 1, nil
 }
 
-func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
+func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -146,7 +147,8 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string) (err error) {
 		return err
 	}
 	defer db.Close()
-	quer := "INSERT INTO short_longURL(short_url, longURL) VALUES('" + string(id) + "', '" + string(longURL) + "');"
+	quer := `INSERT INTO short_longURL(short_url, longURL, token) VALUES ('` + string(id) + `', '` + string(longURL) + `', '` + token + `')`
+
 	_, err = db.Exec(quer)
 	if err != nil {
 		return err
@@ -228,7 +230,7 @@ func DataBaseInsert(id string) (err error) {
 		return err
 	}
 	defer db.Close()
-	Consumer, err := Flw.NewConsumer(id)
+	Consumer, err := flw.NewConsumer(id)
 	if err != nil {
 		return nil
 	}
@@ -237,7 +239,7 @@ func DataBaseInsert(id string) (err error) {
 		if err_ != nil {
 			break
 		}
-		quer := `INSERT INTO short_longURL(short_url, longURL) VALUES ('` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `');`
+		quer := `INSERT INTO short_longURL(short_url, longURL, token) VALUES ('` + string(readEvent.ShortURL) + `', '` + readEvent.LongURL + `', '` + readEvent.Token + `');`
 		_, err = db.Exec(quer)
 		if err != nil {
 			return err
@@ -276,7 +278,7 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 	}
 	return apiRunAddr, nil
 }
-func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
+func DataBaseJSONPage(shortURL string, longURL string, token string) (b int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -306,21 +308,21 @@ func DataBaseJSONPage(shortURL string, longURL string) (b int, err error) {
 	return id, nil
 }
 
-func DataBaseFilePost(shortURL string, longURL string) (err error) {
+func DataBaseFilePost(shortURL string, longURL string, token string) (err error) {
 	fileName, err := DataBaseFileNameSelect()
 	if err != nil {
 		log.Fatal(err)
 	}
-	Producer, err := Flw.NewProducer(fileName)
+	Producer, err := flw.NewProducer(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer Producer.Close()
-	id, err := DataBaseJSONPage(shortURL, longURL)
+	id, err := DataBaseJSONPage(shortURL, longURL, token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var events = []*Flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL}}
+	var events = []*flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
 		log.Fatal(err)
@@ -428,4 +430,113 @@ func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
 		return err
 	}
 	return nil
+}
+
+func DataBaseGetAllURLs(token string) (answb []AnswerBatch, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return nil, err
+	}
+	apiRunAddr, err := DataBaseCreateShortURLPageCfg()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return nil, err
+	}
+	quer := "SELECT short_url, longURL from short_longURL where token = '" + token + "';"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return nil, err
+	}
+	flag := 0
+	for rows.Next() {
+		answ := new(AnswerBatch)
+		err = rows.Scan(&answ.ShortURL, &answ.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		if rows.Err() != nil {
+			return nil, rows.Err()
+		}
+		answ.ShortURL = apiRunAddr + "/" + answ.ShortURL
+		answb = append(answb, *answ)
+		flag = 1
+	}
+	if flag == 0 {
+		return nil, nil
+	}
+	return
+}
+
+func DataBaseDeleteURL(longURL string, token string) (err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return err
+	}
+	quer := "UPDATE short_longURL SET delFlag=1 WHERE short_url = '" + longURL + "' and token = '" + token + "';"
+	_, err = db.Exec(quer)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
+	var wg sync.WaitGroup
+	for _, produceItem := range ids {
+
+		wg.Add(1)
+		a := string(produceItem)
+		go func(a string) {
+			_ = DataBaseDeleteURL(a, token)
+			wg.Done()
+		}(a)
+
+	}
+	return nil
+}
+
+func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return 1, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return 1, err
+	}
+	defer db.Close()
+	quer := "SELECT delFlag FROM short_longURL where short_url='" + shortURL + "';"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return 1, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return 1, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&flag)
+	if err != nil {
+		return 1, err
+	}
+	return flag, nil
+}
+
+type AnswerBatch struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }

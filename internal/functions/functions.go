@@ -10,9 +10,12 @@ import (
 	"net/http"
 
 	apcfg "go-prof-sprint-1/internal/app_config"
+	ath "go-prof-sprint-1/internal/authentification"
+
+	cks "go-prof-sprint-1/internal/cookies"
 	db "go-prof-sprint-1/internal/db"
 	gzp "go-prof-sprint-1/internal/gzp"
-	Flw "go-prof-sprint-1/internal/json_parser"
+	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
 	"github.com/caarlos0/env"
@@ -31,15 +34,7 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
-func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
-	apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = io.WriteString(w, "Error on the side")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+func createShortURLPage(w http.ResponseWriter, r *http.Request) {
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -47,15 +42,52 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	}
 	if r.Method == http.MethodPost {
+		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+			return
+		}
+		var cookiesTmp *http.Cookie
+		_, err = cks.GetCookieHandler(w, r)
+		if err != nil {
+			token, err := ath.BuildJWTString()
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			cookiesTmp = cks.SetCookieHandler(w, r, token)
+		} else {
+			cookiesTmp, err = r.Cookie("exampleCookie")
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(w, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
 		rReader, err := io.ReadAll(reader)
 		if err != nil {
 			log.Fatal(err)
 		}
 		longURL := string(rReader)
 		if longURL == "" {
-			http.Error(w, "Bad data for url shortener", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(w, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+
 		}
 		shoortURL, flag, err := db.DataBaseCheckURLExistance(longURL)
 		if err != nil {
@@ -80,11 +112,21 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 		if shortURL != "" {
-			resp, err := http.Post(apiRunAddr+"/"+string(shortURL), "text/plain", b)
+			client := http.Client{}
+			request, err := http.NewRequest("POST", apiRunAddr+"/"+string(shortURL), b)
+
 			if err != nil {
-				return
+				log.Fatal(err)
+			}
+			request.AddCookie(cookiesTmp)
+			resp, err := client.Do(request)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
 			}
 			defer resp.Body.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 			w.WriteHeader(http.StatusCreated)
 			_, err = io.WriteString(w, apiRunAddr+"/"+shortURL)
 			if err != nil {
@@ -104,7 +146,7 @@ func CreateShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
+func downloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
 		id, ok := vars["id"]
@@ -115,6 +157,18 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
+		}
+		flag, err := db.DataBaseCheckURLDelition(id)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if flag == 1 {
+			res.WriteHeader(http.StatusGone)
+			return
 		}
 		longURL, flag, err := db.DatBaseDownloadFullURLPageGet(id)
 		if err != nil {
@@ -142,11 +196,19 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if req.Method == http.MethodPost {
+		token, err := cks.GetCookieHandler(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		a, _ := io.ReadAll(req.Body)
 		longURL := string(a)
 		vars := mux.Vars(req)
 		id := vars["id"]
-		err := db.DataBaseDownloadFullURLPagePost(id, longURL)
+		err = db.DataBaseDownloadFullURLPagePost(id, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -154,8 +216,7 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		//if db.OldName != "" {
-		err = db.DataBaseFilePost(id, longURL)
+		err = db.DataBaseFilePost(id, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -163,11 +224,10 @@ func DownloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
-		//}
 	}
 }
 
-func JSONPage(res http.ResponseWriter, req *http.Request) {
+func jsonPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
 		if err != nil {
@@ -186,6 +246,36 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 			}
 		}
 
+		var token string
+		_, err = cks.GetCookieHandler(res, req)
+		if err != nil {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			_ = cks.SetCookieHandler(res, req, token)
+		} else {
+			cookiesTmp, err := req.Cookie("exampleCookie")
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			token = cookiesTmp.Value
+		}
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		var ques Question
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
@@ -229,7 +319,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DataBaseDownloadFullURLPagePost(shortURL, longURL)
+		err = db.DataBaseDownloadFullURLPagePost(shortURL, longURL, token)
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -250,7 +340,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = db.DataBaseFilePost(shortURL, longURL)
+		err = db.DataBaseFilePost(shortURL, longURL, "qew")
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 			_, err = io.WriteString(res, "Error on the database side")
@@ -261,7 +351,7 @@ func JSONPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
+func pingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		err := db.DataBasePingHandler()
 		if err != nil {
@@ -279,7 +369,7 @@ func PingDataBasePage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 }
-func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
+func uploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
 		reader, err := gzp.GzipFormatHandlerJSON(res, req)
@@ -298,8 +388,31 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 				log.Fatal(err)
 			}
 		}
+		var token string
+		_, err = cks.GetCookieHandler(res, req)
+		if err != nil {
+			token, err = ath.BuildJWTString()
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			_ = cks.SetCookieHandler(res, req, token)
+		} else {
+			cookiesTmp, err := req.Cookie("exampleCookie")
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				_, err = io.WriteString(res, "Error on the side")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			token = cookiesTmp.Value
+		}
 
-		var newProduceItems Flw.ProduceList
+		var newProduceItems flw.ProduceList
 		var buf bytes.Buffer
 		_, err = buf.ReadFrom(reader)
 		if err != nil {
@@ -320,7 +433,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 				return
 			} else {
 				shortURL := generateShortKey()
-				err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL)
+				err = db.DataBaseDownloadFullURLPagePost(shortURL, produceItem.OriginalURL, token)
 				if err != nil {
 					res.WriteHeader(http.StatusBadRequest)
 					_, err = io.WriteString(res, "Error on the database side")
@@ -332,7 +445,7 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 				answ.CorrelationID = produceItem.CorrelationID
 				answ.ShortURL = apiRunAddr + "/" + shortURL
 				tempItems = append(tempItems, answ)
-				err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL)
+				err = db.DataBaseFilePost(shortURL, produceItem.OriginalURL, token)
 				if err != nil {
 					res.WriteHeader(http.StatusBadRequest)
 					_, err = io.WriteString(res, "Error on the database side")
@@ -348,6 +461,72 @@ func UploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 			log.Panic(err)
 		}
 	}
+}
+
+func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		token, err := cks.GetCookieHandler(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		var userURLs []db.AnswerBatch
+		userURLs, err = db.DataBaseGetAllURLs(token)
+		var tmpURLs []db.AnswerBatch
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, err = io.WriteString(res, "Error on the database side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if userURLs == nil {
+			res.WriteHeader(http.StatusNoContent)
+			return
+
+		} else {
+			res.Header().Set("Content-Type", "application/json")
+			res.WriteHeader(http.StatusOK)
+			tmpURLs = append(tmpURLs, userURLs[len(userURLs)-1])
+			if err := json.NewEncoder(res).Encode(tmpURLs); err != nil {
+				log.Panic(err)
+			}
+			return
+		}
+	}
+	if req.Method == http.MethodDelete {
+		reader, err := gzp.GzipFormatHandlerJSON(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusConflict)
+			_, err = io.WriteString(res, "Error on the side")
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		var newDelitionItems flw.DeleteList
+		var buf bytes.Buffer
+		_, err = buf.ReadFrom(reader)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusBadGateway)
+			return
+		}
+		if err = json.Unmarshal(buf.Bytes(), &newDelitionItems); err != nil {
+			http.Error(res, err.Error(), http.StatusForbidden)
+			return
+		}
+		token, err := cks.GetCookieHandler(res, req)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusAccepted)
+		err = db.DataBaseDeleteURLs(newDelitionItems, token)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+		}
+	}
+
 }
 
 func Run() error {
@@ -394,21 +573,22 @@ func Run() error {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
 	mux1 := mux.NewRouter()
-	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
-	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
+	mux1.HandleFunc(`/api/user/urls`, lg.WithLogging(authHandler()))
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
+	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
+	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
 func apiHandler() http.Handler {
-	fn := DownloadFullURLPage
+	fn := downloadFullURLPage
 	return http.HandlerFunc(fn)
 }
 
 func mainHandler() http.Handler {
-	fn := CreateShortURLPage
+	fn := createShortURLPage
 	return http.HandlerFunc(fn)
 }
 
@@ -424,18 +604,27 @@ type AnswerBatch struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
+type NewAnser struct {
+	ShortURL    string `json:"ShortURL"`
+	OriginalURL string `json:"OriginalURL"`
+}
 
 func jsonHandler() http.Handler {
-	fn := JSONPage
+	fn := jsonPage
 	return http.HandlerFunc(fn)
 }
 
 func pingHandler() http.Handler {
-	fn := PingDataBasePage
+	fn := pingDataBasePage
 	return http.HandlerFunc(fn)
 }
 
 func batchHandler() http.Handler {
-	fn := UploadBatchFullURLPage
+	fn := uploadBatchFullURLPage
+	return http.HandlerFunc(fn)
+}
+
+func authHandler() http.Handler {
+	fn := getConcreteURLSUser
 	return http.HandlerFunc(fn)
 }
