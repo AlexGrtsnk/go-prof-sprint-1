@@ -498,13 +498,9 @@ func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 
 		wg.Add(1)
 		a := string(produceItem)
-		go func(a string) error {
-			err = DataBaseDeleteURL(a, token)
+		go func(a string) {
+			_ = DataBaseDeleteURL(a, token)
 			wg.Done()
-			if err != nil {
-				return err
-			}
-			return nil
 		}(a)
 
 	}
