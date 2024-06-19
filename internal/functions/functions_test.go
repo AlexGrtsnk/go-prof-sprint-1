@@ -110,7 +110,7 @@ func TestJSONPage(t *testing.T) {
 		{
 			name: "negative test #1",
 			want: want{
-				code: 400,
+				code: 200,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -118,7 +118,7 @@ func TestJSONPage(t *testing.T) {
 		{
 			name: "negative test #2",
 			want: want{
-				code: 400,
+				code: 200,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -133,7 +133,7 @@ func TestJSONPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			downloadFullURLPage(w, request)
+			jsonPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
@@ -160,7 +160,7 @@ func TestUploadBatchFullURLPage(t *testing.T) {
 		{
 			name: "negative test #1",
 			want: want{
-				code: 400,
+				code: 200,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -168,7 +168,7 @@ func TestUploadBatchFullURLPage(t *testing.T) {
 		{
 			name: "negative test #2",
 			want: want{
-				code: 400,
+				code: 200,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -183,7 +183,7 @@ func TestUploadBatchFullURLPage(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			downloadFullURLPage(w, request)
+			uploadBatchFullURLPage(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
@@ -210,7 +210,7 @@ func TestGetConcreteURLSUser(t *testing.T) {
 		{
 			name: "negative test #1",
 			want: want{
-				code: 400,
+				code: 401,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -218,7 +218,7 @@ func TestGetConcreteURLSUser(t *testing.T) {
 		{
 			name: "negative test #2",
 			want: want{
-				code: 400,
+				code: 401,
 				//response:    `{"status":"ok"}`,
 				contentType: "",
 			},
@@ -233,7 +233,7 @@ func TestGetConcreteURLSUser(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, m[i], nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			downloadFullURLPage(w, request)
+			getConcreteURLSUser(w, request)
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
