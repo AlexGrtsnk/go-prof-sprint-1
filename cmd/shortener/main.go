@@ -2,7 +2,6 @@ package main
 
 import (
 	fun "go-prof-sprint-1/internal/functions"
-	_ "net/http/pprof"
 )
 
 func main() {
