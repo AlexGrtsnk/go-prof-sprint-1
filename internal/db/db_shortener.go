@@ -3,7 +3,6 @@ package databaseshortener
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"sync"
 
 	bn "go-prof-sprint-1/internal/bindata"
@@ -159,13 +158,13 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (e
 func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
 	db, err := NewDB()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	defer db.Close()
 	err = RunMigrateScripts(db)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
@@ -311,21 +310,21 @@ func DataBaseJSONPage(shortURL string, longURL string, token string) (b int, err
 func DataBaseFilePost(shortURL string, longURL string, token string) (err error) {
 	fileName, err := DataBaseFileNameSelect()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	Producer, err := flw.NewProducer(fileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer Producer.Close()
 	id, err := DataBaseJSONPage(shortURL, longURL, token)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	var events = []*flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }

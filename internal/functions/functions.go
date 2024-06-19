@@ -18,6 +18,10 @@ import (
 	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
+	//_ "net/http/debug"
+	"net/http/pprof"
+	_ "net/http/pprof"
+
 	"github.com/caarlos0/env"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -579,6 +583,18 @@ func Run() error {
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
+	//import _ "net/http/debug"
+	//router := mux.NewRouter()
+	//router.PathPrefix("/debug/").Handler(http.DefaultServeMux)
+	//router := mux.NewRouter()
+	mux1.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	mux1.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	mux1.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	mux1.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index)) // special handling for Gorilla mux
+
+	//err := http.ListenAndServe("127.0.0.1:9999", router)
 	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 }
 
