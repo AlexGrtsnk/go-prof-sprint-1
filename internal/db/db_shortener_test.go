@@ -97,6 +97,13 @@ func TestDataBaseStartConfig(t *testing.T) {
 	}
 }
 
+func TestDataBaseSelfConfigGet(t *testing.T) {
+	_, _, err := DataBaseSelfConfigGet()
+	if err != nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
+	}
+}
+
 func TestDataBaseSelfConfigUpdate(t *testing.T) {
 	_, _, err := DataBaseSelfConfigGet()
 	if err != nil {
