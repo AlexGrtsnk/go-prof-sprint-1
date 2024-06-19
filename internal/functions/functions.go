@@ -20,7 +20,6 @@ import (
 
 	//_ "net/http/debug"
 	"net/http/pprof"
-	_ "net/http/pprof"
 
 	"github.com/caarlos0/env"
 	"github.com/gorilla/mux"

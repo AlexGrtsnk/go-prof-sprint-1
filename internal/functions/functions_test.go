@@ -247,3 +247,9 @@ func TestGetConcreteURLSUser(t *testing.T) {
 		i++
 	}
 }
+
+func BenchmarkGenerateShortKey(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		generateShortKey()
+	}
+}
