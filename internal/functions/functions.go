@@ -18,7 +18,6 @@ import (
 	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
-	//_ "net/http/debug"
 	"net/http/pprof"
 
 	"github.com/caarlos0/env"

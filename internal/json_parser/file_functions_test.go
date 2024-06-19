@@ -15,4 +15,3 @@ func TestNewConsumer(t *testing.T) {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
-
