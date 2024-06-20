@@ -452,8 +452,6 @@ func TestJSONPageGoodVibrations(t *testing.T) {
 			},
 		},
 	}
-	var m [1]string
-	m[0] = "http://localhost:8080/qwerty12"
 	//m[1] = "http://localhost:8080/qwerty"
 	i := 0
 	cookie := http.Cookie{
@@ -514,9 +512,6 @@ func TestUploadBatchFullURLPageGoodVibrations(t *testing.T) {
 			},
 		},
 	}
-	var m [1]string
-	//m[0] = "http://localhost:8080/"
-	m[0] = "http://localhost:8080/qwerty"
 	cookie := http.Cookie{
 		Name:     "exampleCookie",
 		Value:    "bbb",
