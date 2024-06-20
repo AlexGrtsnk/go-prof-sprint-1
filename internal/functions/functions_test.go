@@ -169,56 +169,13 @@ func TestCreateShortURLPage3(t *testing.T) {
 			},
 		},
 	}
-	fmt.Println("gfgdrtgdt")
-	var cfg apcfg.Config
-	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	if cfg.ServerAddress != "" {
-		flagRunAddr = "8080"
-	}
-	if cfg.BaseURL != "" {
-		apiRunAddr = cfg.BaseURL
-	}
-	if cfg.FileStoragePath != "" {
-		fileName = cfg.FileStoragePath
-	}
-	if cfg.DatabaseDSN != "" {
-		databaseDSN = cfg.DatabaseDSN
-	}
-	log.Println(cfg)
-	err = db.DataBaseStartConfig(databaseDSN)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if databaseDSN != "localhost" {
-		err = db.DataBasePingHandler()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = db.DataBaseInsert(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("where postgres is hosted:", databaseDSN)
-	fmt.Println("where db is held", fileName)
-	fmt.Println("Running server on", flagRunAddr)
-	fmt.Println("Running api on", apiRunAddr)
-	fmt.Println("gfgdrtgdt")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			b := new(bytes.Buffer)
-			_, err = io.WriteString(b, "http://localhost:8080/multi")
+			_, _ = io.WriteString(b, "http://localhost:8080/multi")
 
-			request := httptest.NewRequest(http.MethodPost, apiRunAddr+"/"+"qwerty", b)
+			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/"+"qwerty", b)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
