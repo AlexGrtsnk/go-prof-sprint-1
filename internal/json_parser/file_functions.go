@@ -39,7 +39,7 @@ type ProduceList []ProduceURL
 // DeleteURL - url, который необходимо удалить базы данных
 type DeleteURL string
 
-// DeleteList - массив url, которые необходимо удалить базы данных
+// DeleteList - массив url, которые необходимо удалить из базы данных
 type DeleteList []DeleteURL
 
 // NewProducer - функция producer для записи в файл в формате json
