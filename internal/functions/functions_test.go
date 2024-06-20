@@ -151,6 +151,48 @@ func TestCreateShortURLPage1(t *testing.T) {
 		})
 	}
 }
+func TestCreateShortURLPage8(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #1",
+			want: want{
+				code: 409,
+				//contentType: "text/plain; charset=utf-8",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			_, _ = io.WriteString(b, "http://localhost:8080/multi")
+
+			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/"+"qwerty", b)
+
+			// создаём новый Recorder
+			w := httptest.NewRecorder()
+			createShortURLPage(w, request)
+
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err := io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			//assert.JSONEq(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+		})
+	}
+}
 func TestCreateShortURLPage3(t *testing.T) {
 	type want struct {
 		code        int
@@ -818,5 +860,17 @@ func TestGetConcreteURLSUserGoodVibrations1(t *testing.T) {
 func BenchmarkGenerateShortKey(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		generateShortKey()
+	}
+}
+
+func TestBuildRun(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+	err := Run()
+	if err != nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }

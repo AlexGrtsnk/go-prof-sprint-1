@@ -539,7 +539,7 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 
 }
 
-// Run запускает наше приложение
+// Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
 func Run() error {
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
