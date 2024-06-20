@@ -55,7 +55,7 @@ func TestCreateShortURLPage(t *testing.T) {
 	}
 }
 
-func TestCreateShortURLPage1(t *testing.T) {
+func TestDownloadFullURLPageAllGood(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -73,7 +73,6 @@ func TestCreateShortURLPage1(t *testing.T) {
 			},
 		},
 	}
-	fmt.Println("gfgdrtgdt")
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
 	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
@@ -151,7 +150,7 @@ func TestCreateShortURLPage1(t *testing.T) {
 		})
 	}
 }
-func TestCreateShortURLPage8(t *testing.T) {
+func TestCreateShortURLPageConflictURL(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -193,7 +192,7 @@ func TestCreateShortURLPage8(t *testing.T) {
 		})
 	}
 }
-func TestCreateShortURLPage3(t *testing.T) {
+func TestDownloadFullURLPageBadReq(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -235,7 +234,7 @@ func TestCreateShortURLPage3(t *testing.T) {
 		})
 	}
 }
-func TestCreateShortURLPage2(t *testing.T) {
+func TestDownloadFullURLPageBadAddr(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -276,7 +275,7 @@ func TestCreateShortURLPage2(t *testing.T) {
 		})
 	}
 }
-func TestCreateShortURLPage4(t *testing.T) {
+func TestDownloadFullURLPageBadCks(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -452,7 +451,6 @@ func TestJSONPageGoodVibrations(t *testing.T) {
 			},
 		},
 	}
-	//m[1] = "http://localhost:8080/qwerty"
 	i := 0
 	cookie := http.Cookie{
 		Name:     "exampleCookie",
@@ -463,7 +461,6 @@ func TestJSONPageGoodVibrations(t *testing.T) {
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
-	//var jsonStr = []byte(`{"url":"Buy cheese and bread for breakfast."}`)
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var jsonStr = []byte(`{"url":"http://localhost:8080/qwerty12"}`)
@@ -525,9 +522,6 @@ func TestUploadBatchFullURLPageGoodVibrations(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var jsonStr1 = []byte(`[{"correlation_id":"asd", "original_url":"http://localhost:8080/qwerty123"}, {"correlation_id":"asd1", "original_url":"http://localhost:8080/qwerty124"}]`)
-			//var jsonStr2 = []byte(`{"correlation_id":"asd1", "original_url":"http://localhost:8080/qwerty124"}`)
-			//var mas[2][]byte()
-			//mas := append(mas, jsonStr1)
 			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/shorten/batch", bytes.NewBuffer(jsonStr1))
 			// создаём новый Recorder
 			request.AddCookie(&cookie)
@@ -547,7 +541,7 @@ func TestUploadBatchFullURLPageGoodVibrations(t *testing.T) {
 	}
 }
 
-func TestUploadBatchFullURLPage1(t *testing.T) {
+func TestUploadBatchFullURLPageBadReq(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -672,9 +666,6 @@ func TestGetConcreteURLSUserbad(t *testing.T) {
 			},
 		},
 	}
-	var m [2]string
-	m[0] = "http://localhost:8080/"
-	m[1] = "http://localhost:8080/qwerty"
 	i := 0
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -729,9 +720,6 @@ func TestGetConcreteURLSUserGoodVibrations(t *testing.T) {
 			},
 		},
 	}
-	var m [2]string
-	m[0] = "http://localhost:8080/"
-	m[1] = "http://localhost:8080/qwerty"
 	i := 0
 	cookiegood := http.Cookie{
 		Name:     "exampleCookie",
@@ -777,7 +765,7 @@ func TestGetConcreteURLSUserGoodVibrations(t *testing.T) {
 	}
 }
 
-func TestGetConcreteURLSUserGoodVibrations1(t *testing.T) {
+func TestGetConcreteURLSUserDelition(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -803,9 +791,6 @@ func TestGetConcreteURLSUserGoodVibrations1(t *testing.T) {
 			},
 		},
 	}
-	var m [2]string
-	m[0] = "http://localhost:8080/"
-	m[1] = "http://localhost:8080/qwerty"
 	i := 0
 	cookiegood := http.Cookie{
 		Name:     "exampleCookie",

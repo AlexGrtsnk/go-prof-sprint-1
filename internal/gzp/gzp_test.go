@@ -14,7 +14,6 @@ func TestGzipFormatHandlerJSON(t *testing.T) {
 }
 
 func TestGzipWrite(t *testing.T) {
-	//request, _ := http.NewRequest("POST", "/", nil)
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
@@ -22,18 +21,15 @@ func TestGzipWrite(t *testing.T) {
 	}()
 	var v gzipWriter
 	_, _ = v.Write([]byte("string"))
-	//_, err := GzipFormatHandlerJSON(nil, request)
 
 }
 
 func TestGzipHandle(t *testing.T) {
-	//request, _ := http.NewRequest("POST", "/", nil)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Errorf("The code did panic")
 		}
 	}()
 	GzipHandle(nil)
-	//_, err := GzipFormatHandlerJSON(nil, request)
 
 }
