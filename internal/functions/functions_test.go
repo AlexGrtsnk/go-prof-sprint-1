@@ -234,6 +234,56 @@ func TestCreateShortURLPage2(t *testing.T) {
 		})
 	}
 }
+func TestCreateShortURLPage4(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #2",
+			want: want{
+				code: 400,
+				//response:    `{"status":"ok"}`,
+				//contentType: "text/plain; charset=utf-8",
+			},
+		},
+	}
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "bbb",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			_, _ = io.WriteString(b, "http://localhost:8080/jhjhk")
+			request := httptest.NewRequest(http.MethodGet, "http://localhost:8080/jhjhk", b)
+			request.AddCookie(&cookie)
+			// создаём новый Recorder
+			w := httptest.NewRecorder()
+			downloadFullURLPage(w, request)
+
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err := io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			//assert.JSONEq(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+		})
+	}
+}
 func TestDownloadFullURLPage(t *testing.T) {
 	type want struct {
 		code        int
