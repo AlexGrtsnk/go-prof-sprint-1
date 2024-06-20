@@ -13,11 +13,13 @@ type gzipWriter struct {
 	Writer io.Writer
 }
 
+// Write функция записи gzip сжатия
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
 	return w.Writer.Write(b)
 }
 
+// GzipHandle  функция хендлер gzip сжатия
 func GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// проверяем, что клиент поддерживает gzip-сжатие
@@ -47,6 +49,7 @@ func GzipHandle(next http.Handler) http.Handler {
 	})
 }
 
+// GzipFormatHandlerJSON функция для поддержки gzip для json
 func GzipFormatHandlerJSON(res http.ResponseWriter, req *http.Request) (reader_ io.Reader, err error) {
 	var reader io.Reader
 

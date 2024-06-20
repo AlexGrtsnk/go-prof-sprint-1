@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// WithLogging - Функция логирования событий приложения
 func WithLogging(h http.Handler) func(w http.ResponseWriter, r *http.Request) {
 	logger, err := zap.NewDevelopment()
 	if err != nil {

@@ -31,6 +31,7 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, token string) (cks
 	//w.Write([]byte("cookie set!"))
 }
 
+// GetCookieHandler возращает токен из куки конернтого запроса
 func GetCookieHandler(w http.ResponseWriter, r *http.Request) (token string, err error) {
 	// Use the Read() function to retrieve the cookie value, additionally
 	// checking for the ErrInvalidValue error and handling it as necessary.
