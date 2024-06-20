@@ -8,18 +8,7 @@ func TestNewDB(t *testing.T) {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
-func TestNewDBGood(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-	_ = DataBaseStartConfig(":8080")
-	_, err := NewDB()
-	if err != nil {
-		t.Errorf("IntMin(2, -2) = %d; want -2", err)
-	}
-}
+
 func TestRunMigrateScripts(t *testing.T) {
 	err := RunMigrateScripts(nil)
 	if err == nil {
@@ -144,6 +133,19 @@ func TestDataBaseDeleteURLs(t *testing.T) {
 func TestDataBaseCheckURLDelition(t *testing.T) {
 	_, err := DataBaseCheckURLDelition("")
 	if err == nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
+	}
+}
+
+func TestNewDBGood(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("The code did  panic")
+		}
+	}()
+	_ = DataBaseStartConfig(":8080")
+	_, err := NewDB()
+	if err != nil {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
