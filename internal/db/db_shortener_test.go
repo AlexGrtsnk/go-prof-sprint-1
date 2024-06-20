@@ -149,3 +149,16 @@ func TestNewDBGood(t *testing.T) {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
+
+func TestRunMigrateScriptsBad(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+	_ = DataBaseStartConfig(":8080")
+	err := RunMigrateScripts(nil)
+	if err == nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
+	}
+}
