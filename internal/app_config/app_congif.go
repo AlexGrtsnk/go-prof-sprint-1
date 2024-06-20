@@ -1,17 +1,25 @@
+// Модуль appconfig отвечает за изначальную конфигурацию приложения по сокращению url
 package appconfig
 
 import (
 	"flag"
 )
 
+// Config франит в себе настройку проекта
 type Config struct {
+	// FileStoragePath содержит в себе путь хранения текстового файла с url
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	DatabaseDSN     string `env:"DATABASE_DSN"`
-	Home            string `env:"HOME"`
-	ServerAddress   string `env:"serverAddress"`
-	BaseURL         string `env:"baseURL"`
+	// DatabaseDSN содержит в себе адрес psql сервера
+	DatabaseDSN string `env:"DATABASE_DSN"`
+	// Home содержит в себе адрес изначальной директории
+	Home string `env:"HOME"`
+	// ServerAddress содержит в себе адрес запуска нашего приложения
+	ServerAddress string `env:"serverAddress"`
+	// BaseURL содержит в себе начало пути адреса для сокращения url
+	BaseURL string `env:"baseURL"`
 }
 
+// ParseFlags возвращает флаги, необходимын для работы приложения
 func ParseFlags() (a string, b string, f string, v string) {
 	var flagRunAddr string
 	var apiRunAddr string
