@@ -740,6 +740,81 @@ func TestGetConcreteURLSUserGoodVibrations(t *testing.T) {
 	}
 }
 
+func TestGetConcreteURLSUserGoodVibrations1(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #1",
+			want: want{
+				code: 202,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "positive test #2",
+			want: want{
+				code: 202,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+	}
+	var m [2]string
+	m[0] = "http://localhost:8080/"
+	m[1] = "http://localhost:8080/qwerty"
+	i := 0
+	cookiegood := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "bbb",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	cookiebad := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "ccc",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			i += 1
+			var delst = []byte(`["8qZzNL", "UE03gB"]`)
+			request := httptest.NewRequest(http.MethodDelete, "http://localhost:8080/api/user/urls", bytes.NewBuffer(delst))
+			// создаём новый Recorder
+			if i == 1 {
+				request.AddCookie(&cookiegood)
+			} else {
+				request.AddCookie(&cookiebad)
+			}
+			w := httptest.NewRecorder()
+			getConcreteURLSUser(w, request)
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			//assert.JSONEq(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+		})
+		i++
+	}
+}
+
 func BenchmarkGenerateShortKey(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		generateShortKey()
