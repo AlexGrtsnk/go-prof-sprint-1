@@ -17,6 +17,7 @@ type Claims struct {
 const tokenExp = time.Hour * 3
 const secretKey = "supersecretkey"
 
+// GetUserId выдает токен зарегестрированного пользователя
 func GetUserID(tokenString string) int {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
