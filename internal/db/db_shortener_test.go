@@ -8,7 +8,13 @@ func TestNewDB(t *testing.T) {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
-
+func TestNewDBGood(t *testing.T) {
+	_ = DataBaseStartConfig(":8080")
+	_, err := NewDB()
+	if err != nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
+	}
+}
 func TestRunMigrateScripts(t *testing.T) {
 	err := RunMigrateScripts(nil)
 	if err == nil {
