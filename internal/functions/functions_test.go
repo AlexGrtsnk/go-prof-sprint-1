@@ -366,7 +366,7 @@ func TestJSONPage(t *testing.T) {
 	i := 0
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, m[i], nil)
+			request := httptest.NewRequest(http.MethodGet, "http://localhost:8080/api/shorten", nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			jsonPage(w, request)
@@ -384,7 +384,7 @@ func TestJSONPage(t *testing.T) {
 	}
 }
 
-func TestJSONPage1(t *testing.T) {
+func TestJSONPageGoodVibrations(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string
@@ -446,7 +446,71 @@ func TestJSONPage1(t *testing.T) {
 	}
 }
 
-func TestUploadBatchFullURLPage(t *testing.T) {
+func TestUploadBatchFullURLPageGoodVibrations(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive #1",
+			want: want{
+				code: 201,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "positive test #2",
+			want: want{
+				code: 201,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+	}
+	var m [1]string
+	//m[0] = "http://localhost:8080/"
+	m[0] = "http://localhost:8080/qwerty"
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "bbb",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	i := 0
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var jsonStr1 = []byte(`[{"correlation_id":"asd", "original_url":"http://localhost:8080/qwerty123"}, {"correlation_id":"asd1", "original_url":"http://localhost:8080/qwerty124"}]`)
+			//var jsonStr2 = []byte(`{"correlation_id":"asd1", "original_url":"http://localhost:8080/qwerty124"}`)
+			//var mas[2][]byte()
+			//mas := append(mas, jsonStr1)
+			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/shorten/batch", bytes.NewBuffer(jsonStr1))
+			// создаём новый Recorder
+			request.AddCookie(&cookie)
+			w := httptest.NewRecorder()
+			uploadBatchFullURLPage(w, request)
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			//assert.JSONEq(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+		})
+		i++
+	}
+}
+
+func TestUploadBatchFullURLPage1(t *testing.T) {
 	type want struct {
 		code        int
 		contentType string

@@ -27,9 +27,9 @@ type Producer struct {
 
 // ProduceURL тип записи о url в json
 type ProduceURL struct {
-	// CorrelationID изначальный url
+	// CorrelationID id посланного нам url
 	CorrelationID string `json:"correlation_id"`
-	// OriginalURL сокращенный url
+	// OriginalURL изначальный адрес url для сокращения
 	OriginalURL string `json:"original_url"`
 }
 
