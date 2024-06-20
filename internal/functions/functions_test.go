@@ -67,7 +67,7 @@ func TestCreateShortURLPage1(t *testing.T) {
 		{
 			name: "positive test #1",
 			want: want{
-				code: 400,
+				code: 200,
 				//response:    `{"status":"ok"}`,
 				//contentType: "text/plain; charset=utf-8",
 			},
@@ -117,11 +117,23 @@ func TestCreateShortURLPage1(t *testing.T) {
 	fmt.Println("Running server on", flagRunAddr)
 	fmt.Println("Running api on", apiRunAddr)
 	fmt.Println("gfgdrtgdt")
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "bbb",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			b := new(bytes.Buffer)
-			_, err = io.WriteString(b, "http://localhost:8080/dasdsdqwe")
-			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/dasdsdqwe", b)
+			_, err = io.WriteString(b, "http://localhost:8080/multi")
+
+			request := httptest.NewRequest(http.MethodPost, apiRunAddr+"/"+"qwerty", b)
+
+			request.AddCookie(&cookie)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
 			downloadFullURLPage(w, request)
