@@ -164,7 +164,6 @@ func TestCreateShortURLPage3(t *testing.T) {
 			name: "positive test #1",
 			want: want{
 				code: 400,
-				//response:    `{"status":"ok"}`,
 				//contentType: "text/plain; charset=utf-8",
 			},
 		},
