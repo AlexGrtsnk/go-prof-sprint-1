@@ -120,7 +120,7 @@ func TestCreateShortURLPage1(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			b := new(bytes.Buffer)
-			_, err = io.WriteString(b, "dasdsdqwe")
+			_, err = io.WriteString(b, "http://localhost:8080/dasdsdqwe")
 			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/dasdsdqwe", b)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
