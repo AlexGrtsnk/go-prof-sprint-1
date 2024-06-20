@@ -1,6 +1,12 @@
 package databaseshortener
 
-import "testing"
+import (
+	apcfg "go-prof-sprint-1/internal/app_config"
+	"log"
+	"testing"
+
+	"github.com/caarlos0/env"
+)
 
 func TestNewDB(t *testing.T) {
 	_, err := NewDB()
@@ -159,6 +165,57 @@ func TestRunMigrateScriptsBad(t *testing.T) {
 	_ = DataBaseStartConfig(":8080")
 	err := RunMigrateScripts(nil)
 	if err == nil {
+		t.Errorf("IntMin(2, -2) = %d; want -2", err)
+	}
+}
+
+func TestNewDBGood1(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("The code did  panic")
+		}
+	}()
+	var cfg apcfg.Config
+	err := env.Parse(&cfg)
+	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cfg.ServerAddress != "" {
+		flagRunAddr = "8080"
+	}
+	if cfg.BaseURL != "" {
+		apiRunAddr = cfg.BaseURL
+	}
+	if cfg.FileStoragePath != "" {
+		fileName = cfg.FileStoragePath
+	}
+	if cfg.DatabaseDSN != "" {
+		databaseDSN = cfg.DatabaseDSN
+	}
+	log.Println(cfg)
+	err = DataBaseStartConfig(databaseDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if databaseDSN != "localhost" {
+		err = DataBasePingHandler()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	err = DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = DataBaseInsert(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = DataBaseCreateShortURLPageCfg()
+	//_, err := NewDB()
+	if err != nil {
 		t.Errorf("IntMin(2, -2) = %d; want -2", err)
 	}
 }
