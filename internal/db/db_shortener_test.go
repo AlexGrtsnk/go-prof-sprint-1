@@ -9,6 +9,11 @@ func TestNewDB(t *testing.T) {
 	}
 }
 func TestNewDBGood(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
 	_ = DataBaseStartConfig(":8080")
 	_, err := NewDB()
 	if err != nil {
