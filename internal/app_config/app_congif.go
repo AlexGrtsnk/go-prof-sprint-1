@@ -5,6 +5,7 @@ import (
 	"flag"
 )
 
+// Config франит в себе настройку проекта
 type Config struct {
 	// FileStoragePath содержит в себе путь хранения текстового файла с url
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
