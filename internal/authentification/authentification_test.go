@@ -18,6 +18,6 @@ func TestGetUserID(t *testing.T) {
 
 func BenchmarkBuildJWTString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		BuildJWTString()
+		_, _ = BuildJWTString()
 	}
 }
