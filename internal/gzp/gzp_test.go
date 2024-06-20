@@ -13,6 +13,20 @@ func TestGzipFormatHandlerJSON(t *testing.T) {
 	}
 }
 
+func TestGzipFormatHandlerJSON1(t *testing.T) {
+	request, _ := http.NewRequest("POST", "/", nil)
+	request.Header.Set(`Content-Encoding`, `gzip`)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+	_, err := GzipFormatHandlerJSON(nil, request)
+	if err != nil {
+		t.Errorf("this is err = %d", err)
+	}
+}
+
 func TestGzipWrite(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
