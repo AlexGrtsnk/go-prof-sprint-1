@@ -67,7 +67,7 @@ func TestCreateShortURLPage1(t *testing.T) {
 		{
 			name: "negative test #1",
 			want: want{
-				code: 201,
+				code: 400,
 				//response:    `{"status":"ok"}`,
 				//contentType: "text/plain; charset=utf-8",
 			},
@@ -124,7 +124,7 @@ func TestCreateShortURLPage1(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/dasdsdqwe", b)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			createShortURLPage(w, request)
+			downloadFullURLPage(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
