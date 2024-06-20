@@ -384,6 +384,68 @@ func TestJSONPage(t *testing.T) {
 	}
 }
 
+func TestJSONPage1(t *testing.T) {
+	type want struct {
+		code        int
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "positive test #1",
+			want: want{
+				code: 201,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "positivetest #2",
+			want: want{
+				code: 409,
+				//response:    `{"status":"ok"}`,
+				contentType: "application/json",
+			},
+		},
+	}
+	var m [1]string
+	m[0] = "http://localhost:8080/qwerty12"
+	//m[1] = "http://localhost:8080/qwerty"
+	i := 0
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "bbb",
+		Path:     "/",
+		MaxAge:   0,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	//var jsonStr = []byte(`{"url":"Buy cheese and bread for breakfast."}`)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var jsonStr = []byte(`{"url":"http://localhost:8080/qwerty12"}`)
+			request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/shorten", bytes.NewBuffer(jsonStr))
+			// создаём новый Recorder
+			request.AddCookie(&cookie)
+			w := httptest.NewRecorder()
+			jsonPage(w, request)
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			//assert.JSONEq(t, test.want.response, string(resBody))
+			assert.Equal(t, test.want.contentType, res.Header.Get("Content-Type"))
+		})
+		i++
+	}
+}
+
 func TestUploadBatchFullURLPage(t *testing.T) {
 	type want struct {
 		code        int
