@@ -172,7 +172,7 @@ func TestRunMigrateScriptsBad(t *testing.T) {
 func TestDataBaseCreateShortURLPageCfgGood(t *testing.T) {
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHttps, config := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -189,7 +189,11 @@ func TestDataBaseCreateShortURLPageCfgGood(t *testing.T) {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
-	log.Println(cfg)
+	if cfg.EnableHttps != true {
+		enableHttps = cfg.EnableHttps
+	}
+	log.Println(enableHttps)
+	log.Println(config)
 	err = DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)

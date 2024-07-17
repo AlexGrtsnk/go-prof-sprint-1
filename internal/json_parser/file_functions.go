@@ -98,3 +98,17 @@ func (c *Consumer) ReadEvent() (*Event, error) {
 func (c *Consumer) Close() error {
 	return c.file.Close()
 }
+
+// Setting - тип, используюшийся для чтения файла формата JSON с параметрами конфигурации exe
+type Setting struct {
+	// аналог переменной окружения SERVER_ADDRESS или флага -a
+	ServerAddress string `json:"server_address"`
+	// аналог переменной окружения BASE_URL или флага -b
+	BaseURL string `json:"base_url"`
+	// LongURL изначальный отправленный пользователем url
+	FileStoragePath string `json:"file_storage_path"`
+	// аналог переменной окружения DATABASE_DSN или флага -d
+	DataBaseDSN string `json:"database_dsn"`
+	// DelFlag флаг мягкого удаления из базы данныз
+	EnableHttps bool `json:"enable_https"`
+}

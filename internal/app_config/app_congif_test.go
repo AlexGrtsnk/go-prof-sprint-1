@@ -6,6 +6,6 @@ import (
 )
 
 func TestBuildJWTString(t *testing.T) {
-	a, b, f, v := ParseFlags()
-	fmt.Println(a, b, f, v)
+	a, b, f, v, s, c := ParseFlags()
+	fmt.Println(a, b, f, v, s, c)
 }

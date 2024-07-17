@@ -75,7 +75,7 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	}
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHttps, config := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +92,8 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
-	log.Println(cfg)
+	log.Println(enableHttps)
+	log.Println(config)
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
