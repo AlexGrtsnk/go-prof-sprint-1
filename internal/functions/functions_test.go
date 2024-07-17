@@ -844,16 +844,11 @@ func BenchmarkGenerateShortKey(b *testing.B) {
 	}
 }
 
-/*
 func TestBuildRun(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("The code did not panic")
 		}
 	}()
-	err := Run()
-	if err != nil {
-		t.Errorf("this is err = %d", err)
-	}
+	_, _ = Run()
 }
-*/

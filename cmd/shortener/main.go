@@ -26,26 +26,23 @@ func main() {
 	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		<-sigint
-		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
 		if err := srv.Shutdown(context.Background()); err != nil {
-			// ошибки закрытия Listener
 			log.Printf("HTTP server Shutdown: %v", err)
 		}
-		// сообщаем основному потоку,
-		// что все сетевые соединения обработаны и закрыты
 		close(idleConnsClosed)
 	}()
 	if !enableHTTPS {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			// ошибки старта или остановки Listener
 			log.Fatalf("HTTP server ListenAndServe: %v", err)
 		}
 	} else {
-		if err := srv.ListenAndServeTLS("certificate", "key"); err != http.ErrServerClosed {
-			// ошибки старта или остановки Listener
-			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		fmt.Println(srv.Addr)
+		/*
+			if err := srv.ListenAndServeTLS("certificate", "key"); err != http.ErrServerClosed {
+				// ошибки старта или остановки Listener
+				log.Fatalf("HTTP server ListenAndServe: %v", err)
 
-		}
+			}*/
 	}
 	<-idleConnsClosed
 
