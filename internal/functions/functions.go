@@ -649,7 +649,7 @@ func Run() error {
 		srv.Addr = flagRunAddr
 		srv.Handler = gzp.GzipHandle(mux1)
 		//<-idleConnsClosed
-		fmt.Println(srv)
+		fmt.Println(srv.Addr)
 		return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
 		//<-idleConnsClosed
 	} else {
