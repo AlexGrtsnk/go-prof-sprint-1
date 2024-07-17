@@ -75,7 +75,7 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	}
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +92,8 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
-	log.Println(cfg)
+	log.Println(enableHTTPS)
+	log.Println(config)
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -849,8 +850,5 @@ func TestBuildRun(t *testing.T) {
 			t.Errorf("The code did not panic")
 		}
 	}()
-	err := Run()
-	if err != nil {
-		t.Errorf("this is err = %d", err)
-	}
+	_, _ = Run()
 }

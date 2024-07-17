@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 
 	apcfg "go-prof-sprint-1/internal/app_config"
 	ath "go-prof-sprint-1/internal/authentification"
@@ -540,14 +541,14 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 }
 
 // Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
-func Run() error {
+func Run() (*http.Server, bool) {
 	var cfg apcfg.Config
+	var srv = http.Server{}
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if cfg.ServerAddress != "" {
 		flagRunAddr = "8080"
 	}
@@ -560,7 +561,37 @@ func Run() error {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
+	if !cfg.EnableHTTPS {
+		enableHTTPS = cfg.EnableHTTPS
+	}
+	if cfg.Config != "" {
+		config = cfg.Config
+	}
 	log.Println(cfg)
+	configFile, err := os.Open(config)
+	if err != nil {
+		fmt.Println("no file was found")
+	}
+	var setting flw.Setting
+	jsonParser := json.NewDecoder(configFile)
+	if err = jsonParser.Decode(&setting); err != nil {
+		fmt.Println("wrong data in file. using old types")
+	}
+	if flagRunAddr == "8080" && setting.ServerAddress != "" {
+		flagRunAddr = setting.ServerAddress
+	}
+	if apiRunAddr == "http://localhost:8080" && setting.BaseURL != "" {
+		apiRunAddr = setting.BaseURL
+	}
+	if fileName == "text.txt" && setting.FileStoragePath != "" {
+		fileName = setting.FileStoragePath
+	}
+	if databaseDSN == "localhost" && setting.DataBaseDSN != "" {
+		databaseDSN = setting.DataBaseDSN
+	}
+	if !enableHTTPS && !setting.EnableHTTPS {
+		enableHTTPS = setting.EnableHTTPS
+	}
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -596,7 +627,10 @@ func Run() error {
 	mux1.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index))
-	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
+	srv.Addr = flagRunAddr
+	srv.Handler = mux1
+	return &srv, enableHTTPS
+
 }
 
 func apiHandler() http.Handler {
