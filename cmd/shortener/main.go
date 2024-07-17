@@ -36,13 +36,11 @@ func main() {
 			log.Fatalf("HTTP server ListenAndServe: %v", err)
 		}
 	} else {
-		fmt.Println(srv.Addr)
-		/*
-			if err := srv.ListenAndServeTLS("certificate", "key"); err != http.ErrServerClosed {
-				// ошибки старта или остановки Listener
-				log.Fatalf("HTTP server ListenAndServe: %v", err)
+		if err := srv.ListenAndServeTLS("certificate", "key"); err != http.ErrServerClosed {
+			// ошибки старта или остановки Listener
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
 
-			}*/
+		}
 	}
 	<-idleConnsClosed
 

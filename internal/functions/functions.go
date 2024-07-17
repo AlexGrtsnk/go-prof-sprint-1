@@ -627,7 +627,8 @@ func Run() (*http.Server, bool) {
 	mux1.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index))
-
+	srv.Addr = flagRunAddr
+	srv.Handler = mux1
 	return &srv, enableHTTPS
 
 }
