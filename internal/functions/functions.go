@@ -2,7 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,8 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
 	apcfg "go-prof-sprint-1/internal/app_config"
 	ath "go-prof-sprint-1/internal/authentification"
@@ -630,21 +627,7 @@ func Run() error {
 	mux1.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index))
-	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 1)
-	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	go func() {
-		<-sigint
-		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
-		if err := srv.Shutdown(context.Background()); err != nil {
-			// ошибки закрытия Listener
-			log.Printf("HTTP server Shutdown: %v", err)
-		}
-		// сообщаем основному потоку,
-		// что все сетевые соединения обработаны и закрыты
-		close(idleConnsClosed)
-	}()
 	if !enableHttps {
 		srv.Addr = flagRunAddr
 		srv.Handler = gzp.GzipHandle(mux1)
