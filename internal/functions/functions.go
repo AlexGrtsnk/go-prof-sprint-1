@@ -648,11 +648,11 @@ func Run() error {
 	if !enableHttps {
 		srv.Addr = flagRunAddr
 		srv.Handler = gzp.GzipHandle(mux1)
-		<-idleConnsClosed
+		//<-idleConnsClosed
 		return srv.ListenAndServe()
 		//<-idleConnsClosed
 	} else {
-		<-idleConnsClosed
+		//<-idleConnsClosed
 		return http.ListenAndServeTLS(flagRunAddr, "certificate", "key", gzp.GzipHandle(mux1))
 	}
 
