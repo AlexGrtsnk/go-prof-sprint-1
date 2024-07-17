@@ -17,8 +17,8 @@ type Config struct {
 	ServerAddress string `env:"serverAddress"`
 	// BaseURL содержит в себе начало пути адреса для сокращения url
 	BaseURL string `env:"baseURL"`
-	// При передаче флага Enablehttps сервер запуститься по методу http.ListenAndServeTLS
-	EnableHttps bool `env:"ENABLE_HTTPS"`
+	// При передаче флага EnableHTTPS сервер запуститься по методу http.ListenAndServeTLS
+	EnableHTTPS bool `env:"ENABLE_HTTPS"`
 	// Config содержит в себе имя файла в формате JSON с параметрами кофигурации приложения
 	Config string `env:"CONFIG"`
 }
@@ -29,13 +29,13 @@ func ParseFlags() (a string, b string, f string, v string, s bool, c string) {
 	var apiRunAddr string
 	var fileName string
 	var dataBaseAddress string
-	var enableHttps bool
+	var enableHTTPS bool
 	var config string
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&apiRunAddr, "b", "http://localhost:8080", "api page existance url adress")
 	flag.StringVar(&fileName, "f", "text.txt", "txt file with short and long urls")
 	flag.StringVar(&dataBaseAddress, "d", "localhost", "databaseport")
-	flag.BoolVar(&enableHttps, "s", false, "if flag is on, using http.ListenAndServeTLS")
+	flag.BoolVar(&enableHTTPS, "s", false, "if flag is on, using http.ListenAndServeTLS")
 	flag.StringVar(&config, "c", "ns", "JSON file adress with exe config")
 	flag.Parse()
 	if flagRunAddr != "localhost:8080" && apiRunAddr == "http://localhost:8080" {
@@ -44,5 +44,5 @@ func ParseFlags() (a string, b string, f string, v string, s bool, c string) {
 	if flagRunAddr == "localhost:8080" && apiRunAddr != "http://localhost:8080" {
 		flagRunAddr = apiRunAddr[7:]
 	}
-	return flagRunAddr, apiRunAddr, fileName, dataBaseAddress, enableHttps, config
+	return flagRunAddr, apiRunAddr, fileName, dataBaseAddress, enableHTTPS, config
 }

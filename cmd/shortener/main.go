@@ -20,11 +20,10 @@ var (
 
 func main() {
 	fmt.Printf("version=%s, date=%s, commit=%ss\n", BuildVersion, BuildDate, BuildCommit)
-	srv := fun.Run()
+	srv, enableHTTPS := fun.Run()
 	idleConnsClosed := make(chan struct{})
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
 	go func() {
 		<-sigint
 		// получили сигнал os.Interrupt, запускаем процедуру graceful shutdown
@@ -36,9 +35,17 @@ func main() {
 		// что все сетевые соединения обработаны и закрыты
 		close(idleConnsClosed)
 	}()
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		// ошибки старта или остановки Listener
-		log.Fatalf("HTTP server ListenAndServe: %v", err)
+	if !enableHTTPS {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			// ошибки старта или остановки Listener
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
+		}
+	} else {
+		if err := srv.ListenAndServeTLS("certificate", "key"); err != http.ErrServerClosed {
+			// ошибки старта или остановки Listener
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
+
+		}
 	}
 	<-idleConnsClosed
 

@@ -541,11 +541,11 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 }
 
 // Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
-func Run() *http.Server {
+func Run() (*http.Server, bool) {
 	var cfg apcfg.Config
 	var srv = http.Server{}
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHttps, config := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -561,8 +561,8 @@ func Run() *http.Server {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
-	if !cfg.EnableHttps {
-		enableHttps = cfg.EnableHttps
+	if !cfg.EnableHTTPS {
+		enableHTTPS = cfg.EnableHTTPS
 	}
 	if cfg.Config != "" {
 		config = cfg.Config
@@ -589,8 +589,8 @@ func Run() *http.Server {
 	if databaseDSN == "localhost" && setting.DataBaseDSN != "" {
 		databaseDSN = setting.DataBaseDSN
 	}
-	if !enableHttps && !setting.EnableHttps {
-		enableHttps = setting.EnableHttps
+	if !enableHTTPS && !setting.EnableHTTPS {
+		enableHTTPS = setting.EnableHTTPS
 	}
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
@@ -628,18 +628,7 @@ func Run() *http.Server {
 	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index))
 
-	if !enableHttps {
-		srv.Addr = flagRunAddr
-		srv.Handler = gzp.GzipHandle(mux1)
-		//<-idleConnsClosed
-		//fmt.Println(srv)
-		return &srv
-		//<-idleConnsClosed
-	} else {
-		//<-idleConnsClosed
-		//return http.ListenAndServeTLS(flagRunAddr, "certificate", "key", gzp.GzipHandle(mux1))
-		return &srv
-	}
+	return &srv, enableHTTPS
 
 }
 

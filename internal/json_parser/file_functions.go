@@ -110,5 +110,5 @@ type Setting struct {
 	// аналог переменной окружения DATABASE_DSN или флага -d
 	DataBaseDSN string `json:"database_dsn"`
 	// DelFlag флаг мягкого удаления из базы данныз
-	EnableHttps bool `json:"enable_https"`
+	EnableHTTPS bool `json:"enable_https"`
 }
