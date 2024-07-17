@@ -541,7 +541,7 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 }
 
 // Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
-func Run() error {
+func Run() *http.Server {
 	var cfg apcfg.Config
 	var srv = http.Server{}
 	err := env.Parse(&cfg)
@@ -632,12 +632,13 @@ func Run() error {
 		srv.Addr = flagRunAddr
 		srv.Handler = gzp.GzipHandle(mux1)
 		//<-idleConnsClosed
-		fmt.Println(srv.Addr)
-		return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
+		//fmt.Println(srv)
+		return &srv
 		//<-idleConnsClosed
 	} else {
 		//<-idleConnsClosed
-		return http.ListenAndServeTLS(flagRunAddr, "certificate", "key", gzp.GzipHandle(mux1))
+		//return http.ListenAndServeTLS(flagRunAddr, "certificate", "key", gzp.GzipHandle(mux1))
+		return &srv
 	}
 
 }
