@@ -3,7 +3,6 @@ package databaseshortener
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"sync"
 
 	bn "go-prof-sprint-1/internal/bindata"
@@ -23,6 +22,7 @@ import (
 const drriver = "sqlite3"
 const dbbName = "shortenerdbs.db"
 
+// NewDB создает новую sql сущность с конкретным необходимым нам драйвером
 func NewDB() (*sql.DB, error) {
 	dbname, driverTemp, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -36,6 +36,7 @@ func NewDB() (*sql.DB, error) {
 	return sqliteDB, nil
 }
 
+// RunMigrateScripts запускает скрипты миграции в зависимости от версии драйвера
 func RunMigrateScripts(db *sql.DB) error {
 	var driver database.Driver
 	var err error
@@ -78,6 +79,7 @@ func RunMigrateScripts(db *sql.DB) error {
 	return nil
 }
 
+// DataBaseCreateShortURLPageCfg возвращает адрес запуска api страницы для сокращения
 func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
@@ -107,6 +109,7 @@ func DataBaseCreateShortURLPageCfg() (apiRunAddr_ string, err error) {
 	return apiRunAddr, nil
 }
 
+// DatBaseDownloadFullURLPageGet по сокращенному url возращает его полную версию и flag, 1 - url успешно найден
 func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -136,6 +139,7 @@ func DatBaseDownloadFullURLPageGet(id string) (longURL_ string, flag int, err er
 	return longURL, 1, nil
 }
 
+// DataBaseDownloadFullURLPagePost добавляет в базу данных новую запись, содержащую короткий и длинный url с токеном пользователя, сделавшим запрос на сокращение
 func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -156,25 +160,28 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (e
 	return nil
 }
 
-func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
+// DataBaseCfg конфигурирует базу данных
+func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string, trustedSubnet string) (err error) {
 	db, err := NewDB()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	defer db.Close()
 	err = RunMigrateScripts(db)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
-	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
+	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm, tssb) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `', '` + trustedSubnet + `')`
 	_, err = db.Exec(quer)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
+// DataBasePingHandler хендлер для проверки отклика базы данных
 func DataBasePingHandler() (err error) {
 	_, driverTemp, err := DataBaseSelfConfigGet()
 	if err != nil {
@@ -193,6 +200,7 @@ func DataBasePingHandler() (err error) {
 	return nil
 }
 
+// DataBasePing проверяет, отвечает ли наша база данных
 func DataBasePing(dbbname string, driver string) (err error) {
 	var db *sql.DB
 	var res string
@@ -218,6 +226,7 @@ func DataBasePing(dbbname string, driver string) (err error) {
 	return nil
 }
 
+// DataBaseInsert вставляет в базу новую запись из формата json
 func DataBaseInsert(id string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -249,6 +258,7 @@ func DataBaseInsert(id string) (err error) {
 	return nil
 }
 
+// DataBaseFileNameSelect возвращает место хранения записей о сокращенныз url
 func DataBaseFileNameSelect() (flnm string, err error) {
 	var db *sql.DB
 	var apiRunAddr string
@@ -278,6 +288,98 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 	}
 	return apiRunAddr, nil
 }
+
+// DataBaseTrustedSubnetSelect возвращает адрес доверенной подсети
+func DataBaseTrustedSubnetSelect() (tssb string, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	quer := "SELECT flnm FROM cfg WHERE id = 1;"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&tssb)
+	if err != nil {
+		return "", err
+	}
+	return tssb, nil
+}
+
+// DataBaseURLsCountSelect возвращает количество сокращенных сервисом url
+func DataBaseURLsCountSelect() (cntURL int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return cntURL, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return cntURL, err
+	}
+	defer db.Close()
+	quer := "SELECT COUNT(*) FROM short_longURL"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return cntURL, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return cntURL, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&cntURL)
+	if err != nil {
+		return cntURL, err
+	}
+	return cntURL, nil
+}
+
+// DataBaseUsersCountSelect возвращает количество пользователей сервиса
+func DataBaseUsersCountSelect() (cntUser int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return cntUser, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return cntUser, err
+	}
+	defer db.Close()
+	quer := "SELECT COUNT(DISTINCT token) FROM short_longURL"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return cntUser, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return cntUser, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&cntUser)
+	if err != nil {
+		return cntUser, err
+	}
+	return cntUser, nil
+}
+
+// DataBaseJSONPage возвращает id записи с конкретными параметрами
 func DataBaseJSONPage(shortURL string, longURL string, token string) (b int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -308,28 +410,30 @@ func DataBaseJSONPage(shortURL string, longURL string, token string) (b int, err
 	return id, nil
 }
 
+// DataBaseFilePost пишет запись о новом сокращенном url в файл, предназначенный для их хранения
 func DataBaseFilePost(shortURL string, longURL string, token string) (err error) {
 	fileName, err := DataBaseFileNameSelect()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	Producer, err := flw.NewProducer(fileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer Producer.Close()
 	id, err := DataBaseJSONPage(shortURL, longURL, token)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	var events = []*flw.Event{{ID: id, ShortURL: shortURL, LongURL: longURL, Token: token, DelFlag: 0}}
 	err = Producer.WriteEvent(events[0])
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }
 
+// DataBaseCheckURLExistance проверяет наличие сокращенного url в базе данных
 func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -352,6 +456,7 @@ func DataBaseCheckURLExistance(longURL string) (shortURL string, flag int, err e
 	return shoortURL, 1, nil
 }
 
+// DataBaseStartConfig конфигурирует изначаотный конфиг для записи
 func DataBaseStartConfig(dbName string) (err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "cfg.db")
@@ -378,6 +483,7 @@ func DataBaseStartConfig(dbName string) (err error) {
 	return nil
 }
 
+// DataBaseSelfConfigGet возвращает конфиг, на котором сейчас работает база данных
 func DataBaseSelfConfigGet() (dbbname string, driver string, err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "cfg.db")
@@ -416,6 +522,8 @@ func DataBaseSelfConfigGet() (dbbname string, driver string, err error) {
 	}
 	return dbNameTemp, driverTemp, nil
 }
+
+// DataBaseSelfConfigUpdate изменяет конфиг, записанный в базу данных
 func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
 	var db *sql.DB
 	db, err = sql.Open("sqlite3", "cfg.db")
@@ -432,6 +540,7 @@ func DataBaseSelfConfigUpdate(dbbname string, driver string) (err error) {
 	return nil
 }
 
+// DataBaseGetAllURLs возвращает все url, записанные пользователем с конкретным токеном
 func DataBaseGetAllURLs(token string) (answb []AnswerBatch, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -472,6 +581,7 @@ func DataBaseGetAllURLs(token string) (answb []AnswerBatch, err error) {
 	return
 }
 
+// DataBaseDeleteURL функция мягкого удаления записи о сокращенном url из базы данных
 func DataBaseDeleteURL(longURL string, token string) (err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -492,6 +602,7 @@ func DataBaseDeleteURL(longURL string, token string) (err error) {
 
 }
 
+// DataBaseDeleteURLs обертка для удаления url через горутины
 func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 	var wg sync.WaitGroup
 	for _, produceItem := range ids {
@@ -507,6 +618,7 @@ func DataBaseDeleteURLs(ids flw.DeleteList, token string) (err error) {
 	return nil
 }
 
+// DataBaseCheckURLDelition функция проверки удаления конкретного сокращенного url, 0 - url был удален
 func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
 	var db *sql.DB
 	dbName, dbms, err := DataBaseSelfConfigGet()
@@ -536,7 +648,10 @@ func DataBaseCheckURLDelition(shortURL string) (flag int, err error) {
 	return flag, nil
 }
 
+// AnswerBatch тип ответа от базы с сокращенным и полным url
 type AnswerBatch struct {
-	ShortURL    string `json:"short_url"`
+	// ShortURL - сокращенный url
+	ShortURL string `json:"short_url"`
+	// OriginalURL - полный url
 	OriginalURL string `json:"original_url"`
 }

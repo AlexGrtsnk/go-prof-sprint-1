@@ -1,15 +1,10 @@
 package cookies
 
 import (
-	"errors"
 	"net/http"
 )
 
-var (
-	ErrValueTooLong = errors.New("cookie value too long")
-	ErrInvalidValue = errors.New("invalid cookie value")
-)
-
+// SetCookieHandler создает куку для конкретного запроса, пищет ее в запрос и возвращает
 func SetCookieHandler(w http.ResponseWriter, r *http.Request, token string) (cks *http.Cookie) {
 	// Initialize the cookie as normal.
 	cookie := http.Cookie{
@@ -36,6 +31,7 @@ func SetCookieHandler(w http.ResponseWriter, r *http.Request, token string) (cks
 	//w.Write([]byte("cookie set!"))
 }
 
+// GetCookieHandler возращает токен из куки конернтого запроса
 func GetCookieHandler(w http.ResponseWriter, r *http.Request) (token string, err error) {
 	// Use the Read() function to retrieve the cookie value, additionally
 	// checking for the ErrInvalidValue error and handling it as necessary.

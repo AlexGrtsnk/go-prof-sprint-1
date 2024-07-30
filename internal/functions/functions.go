@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 
 	apcfg "go-prof-sprint-1/internal/app_config"
 	ath "go-prof-sprint-1/internal/authentification"
@@ -18,11 +19,17 @@ import (
 	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
+	//subnetchecker
+	sbch "go-prof-sprint-1/internal/ip_auth"
+
+	"net/http/pprof"
+
 	"github.com/caarlos0/env"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// generateShortKey генерирует сокращенный url
 func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	const keyLength = 6
@@ -34,6 +41,7 @@ func generateShortKey() string {
 	return string(shortKey)
 }
 
+// createShortURLPage отправляет пользователю его токен и адрес сокращенного url
 func createShortURLPage(w http.ResponseWriter, r *http.Request) {
 	reader, err := gzp.GzipFormatHandlerJSON(w, r)
 	if err != nil {
@@ -146,6 +154,7 @@ func createShortURLPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// downloadFullURLPage при методе post пищет сокращенный url в базу данных, при методе get возращает полный url
 func downloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		vars := mux.Vars(req)
@@ -227,6 +236,7 @@ func downloadFullURLPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// jsonPage позволяет получить сокращенный url из полного в формате json
 func jsonPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		apiRunAddr, err := db.DataBaseCreateShortURLPageCfg()
@@ -351,6 +361,7 @@ func jsonPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// pingDataBasePage страница, по адресу которой пользователь может узнать состояние базы данных
 func pingDataBasePage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		err := db.DataBasePingHandler()
@@ -369,6 +380,8 @@ func pingDataBasePage(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 }
+
+// uploadBatchFullURLPage позволяет получить сразу несколько сокращенных url в формате json
 func uploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 
@@ -463,6 +476,7 @@ func uploadBatchFullURLPage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// getConcreteURLSUser возврщает все url, загруженные конкретным пользователем, который отпраляет этот запрос
 func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		token, err := cks.GetCookieHandler(res, req)
@@ -529,14 +543,67 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 
 }
 
-func Run() error {
+func getUserTrustedSubnet(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		trustedSubnet, err := db.DataBaseTrustedSubnetSelect()
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+		}
+		if trustedSubnet == "ns" {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		userIP, err := sbch.ResolveIP(req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		isUserInSubnet, err := sbch.CheckUserIPinSubnet(userIP, trustedSubnet)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if isUserInSubnet {
+			countURLs, err := db.DataBaseURLsCountSelect()
+			if err != nil {
+				return
+			}
+			countUsers, err := db.DataBaseUsersCountSelect()
+			if err != nil {
+				return
+			}
+			var answ flw.Stats
+			answ.URLs = countURLs
+			answ.Users = countUsers
+			resp, err := json.Marshal(answ)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			res.Header().Set("Content-Type", "application/json")
+			res.WriteHeader(http.StatusOK)
+			_, err = res.Write(resp)
+			if err != nil {
+				return
+			}
+			return
+		} else {
+			res.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+	}
+}
+
+// Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
+func Run() (*http.Server, bool) {
 	var cfg apcfg.Config
+	var srv = http.Server{}
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config, trustedSubnet := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if cfg.ServerAddress != "" {
 		flagRunAddr = "8080"
 	}
@@ -549,7 +616,43 @@ func Run() error {
 	if cfg.DatabaseDSN != "" {
 		databaseDSN = cfg.DatabaseDSN
 	}
+	if !cfg.EnableHTTPS {
+		enableHTTPS = cfg.EnableHTTPS
+	}
+	if cfg.Config != "" {
+		config = cfg.Config
+	}
+	if cfg.TrustedSubnet != "" {
+		trustedSubnet = cfg.TrustedSubnet
+	}
 	log.Println(cfg)
+	configFile, err := os.Open(config)
+	if err != nil {
+		fmt.Println("no file was found")
+	}
+	var setting flw.Setting
+	jsonParser := json.NewDecoder(configFile)
+	if err = jsonParser.Decode(&setting); err != nil {
+		fmt.Println("wrong data in file. using old types")
+	}
+	if flagRunAddr == "8080" && setting.ServerAddress != "" {
+		flagRunAddr = setting.ServerAddress
+	}
+	if apiRunAddr == "http://localhost:8080" && setting.BaseURL != "" {
+		apiRunAddr = setting.BaseURL
+	}
+	if fileName == "text.txt" && setting.FileStoragePath != "" {
+		fileName = setting.FileStoragePath
+	}
+	if databaseDSN == "localhost" && setting.DataBaseDSN != "" {
+		databaseDSN = setting.DataBaseDSN
+	}
+	if !enableHTTPS && !setting.EnableHTTPS {
+		enableHTTPS = setting.EnableHTTPS
+	}
+	if trustedSubnet == "ns" && setting.TrustedSubnet != "" {
+		trustedSubnet = setting.TrustedSubnet
+	}
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -560,7 +663,7 @@ func Run() error {
 			log.Fatal(err)
 		}
 	}
-	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
+	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName, trustedSubnet)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -577,9 +680,19 @@ func Run() error {
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
+	mux1.HandleFunc(`/api/internal/stats`, lg.WithLogging(trustedSubnetHandler()))
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
-	return http.ListenAndServe(flagRunAddr, gzp.GzipHandle(mux1))
+	mux1.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	mux1.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	mux1.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	mux1.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	mux1.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	mux1.Handle("/debug/pprof/{cmd}", http.HandlerFunc(pprof.Index))
+	srv.Addr = flagRunAddr
+	srv.Handler = mux1
+	return &srv, enableHTTPS
+
 }
 
 func apiHandler() http.Handler {
@@ -592,20 +705,31 @@ func mainHandler() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+// Question необходима для чтения запроса в формате json
 type Question struct {
+	// LongURL изначальный url, отправленный пользователем
 	LongURL string `json:"url"`
 }
 
+// Answer необходима для отправки ответа пользователю в формате json
 type Answer struct {
+	// Result сокращенный url, отправляемый пользователю
 	Result string `json:"result"`
 }
 
+// AnswerBatch  еобходима для чтения batch запроса в формате json
 type AnswerBatch struct {
+	// CorrelationID изначальный url, отправленный пользователем
 	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
+	// ShortURL сокращенный url, отправляемый пользователем
+	ShortURL string `json:"short_url"`
 }
+
+// NewAnser еобходима для отправки пользователю batch ответа в формате json
 type NewAnser struct {
-	ShortURL    string `json:"ShortURL"`
+	// ShortURL сокращенный url, отправляемый пользователю
+	ShortURL string `json:"ShortURL"`
+	// OriginalURL полный url, отправляемый пользователю
 	OriginalURL string `json:"OriginalURL"`
 }
 
@@ -626,5 +750,10 @@ func batchHandler() http.Handler {
 
 func authHandler() http.Handler {
 	fn := getConcreteURLSUser
+	return http.HandlerFunc(fn)
+}
+
+func trustedSubnetHandler() http.Handler {
+	fn := getUserTrustedSubnet
 	return http.HandlerFunc(fn)
 }
