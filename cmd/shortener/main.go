@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	fun "go-prof-sprint-1/internal/functions"
+	grp "go-prof-sprint-1/internal/grpc"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,7 @@ var (
 
 func main() {
 	fmt.Printf("version=%s, date=%s, commit=%ss\n", BuildVersion, BuildDate, BuildCommit)
+	isUsingGRPC := false
 	srv, enableHTTPS := fun.Run()
 	idleConnsClosed := make(chan struct{})
 	sigint := make(chan os.Signal, 1)
@@ -31,6 +33,10 @@ func main() {
 		}
 		close(idleConnsClosed)
 	}()
+	if isUsingGRPC {
+		grp.RunGRPCServer()
+		return
+	}
 	if !enableHTTPS {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("HTTP server ListenAndServe: %v", err)
