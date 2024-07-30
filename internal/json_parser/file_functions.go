@@ -111,4 +111,13 @@ type Setting struct {
 	DataBaseDSN string `json:"database_dsn"`
 	// DelFlag флаг мягкого удаления из базы данныз
 	EnableHTTPS bool `json:"enable_https"`
+	// подсеть
+	TrustedSubnet string `json:"trusted_subnet"`
+}
+
+type Stats struct {
+	// количество сокращенных юрл в сервисе
+	URLs int `json:"urls"`
+	// количество пользователей в сервисе
+	Users int `json:"users"`
 }

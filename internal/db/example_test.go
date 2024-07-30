@@ -12,7 +12,7 @@ import (
 func ExampetDataBaseCreateShortURLPageCfg() {
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config, trustedSubnet := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,6 +31,7 @@ func ExampetDataBaseCreateShortURLPageCfg() {
 	}
 	log.Println(enableHTTPS)
 	log.Println(config)
+	log.Println(trustedSubnet)
 	err = DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +42,7 @@ func ExampetDataBaseCreateShortURLPageCfg() {
 			log.Fatal(err)
 		}
 	}
-	_ = DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
+	_ = DataBaseCfg(flagRunAddr, apiRunAddr, fileName, trustedSubnet)
 	out1, _ := DataBaseCreateShortURLPageCfg()
 	fmt.Println(out1)
 	var db *sql.DB
