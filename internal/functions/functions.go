@@ -19,6 +19,9 @@ import (
 	flw "go-prof-sprint-1/internal/json_parser"
 	lg "go-prof-sprint-1/internal/logger"
 
+	//subnetchecker
+	sbch "go-prof-sprint-1/internal/ip_auth"
+
 	"net/http/pprof"
 
 	"github.com/caarlos0/env"
@@ -540,12 +543,64 @@ func getConcreteURLSUser(res http.ResponseWriter, req *http.Request) {
 
 }
 
+func getUserTrustedSubnet(res http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodGet {
+		trustedSubnet, err := db.DataBaseTrustedSubnetSelect()
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+		}
+		if trustedSubnet == "ns" {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		userIP, err := sbch.ResolveIP(req)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		isUserInSubnet, err := sbch.CheckUserIPinSubnet(userIP, trustedSubnet)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if isUserInSubnet {
+			countURLs, err := db.DataBaseURLsCountSelect()
+			if err != nil {
+				return
+			}
+			countUsers, err := db.DataBaseUsersCountSelect()
+			if err != nil {
+				return
+			}
+			var answ flw.Stats
+			answ.URLs = countURLs
+			answ.Users = countUsers
+			resp, err := json.Marshal(answ)
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			res.Header().Set("Content-Type", "application/json")
+			res.WriteHeader(http.StatusOK)
+			_, err = res.Write(resp)
+			if err != nil {
+				return
+			}
+			return
+		} else {
+			res.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+	}
+}
+
 // Run определяет необходимые для работы приложения системные переменные, настраивает базу данных и запускает сам сервер
 func Run() (*http.Server, bool) {
 	var cfg apcfg.Config
 	var srv = http.Server{}
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config, trustedSubnet := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -566,6 +621,9 @@ func Run() (*http.Server, bool) {
 	}
 	if cfg.Config != "" {
 		config = cfg.Config
+	}
+	if cfg.TrustedSubnet != "" {
+		trustedSubnet = cfg.TrustedSubnet
 	}
 	log.Println(cfg)
 	configFile, err := os.Open(config)
@@ -592,6 +650,9 @@ func Run() (*http.Server, bool) {
 	if !enableHTTPS && !setting.EnableHTTPS {
 		enableHTTPS = setting.EnableHTTPS
 	}
+	if trustedSubnet == "ns" && setting.TrustedSubnet != "" {
+		trustedSubnet = setting.TrustedSubnet
+	}
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -602,7 +663,7 @@ func Run() (*http.Server, bool) {
 			log.Fatal(err)
 		}
 	}
-	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
+	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName, trustedSubnet)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -619,6 +680,7 @@ func Run() (*http.Server, bool) {
 	mux1.HandleFunc(`/api/shorten`, lg.WithLogging(jsonHandler()))
 	mux1.HandleFunc(`/ping`, lg.WithLogging(pingHandler()))
 	mux1.HandleFunc(`/api/shorten/batch`, lg.WithLogging(batchHandler()))
+	mux1.HandleFunc(`/api/internal/stats`, lg.WithLogging(trustedSubnetHandler()))
 	mux1.HandleFunc(`/{id}`, lg.WithLogging(apiHandler()))
 	mux1.HandleFunc(`/`, lg.WithLogging(mainHandler()))
 	mux1.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
@@ -688,5 +750,10 @@ func batchHandler() http.Handler {
 
 func authHandler() http.Handler {
 	fn := getConcreteURLSUser
+	return http.HandlerFunc(fn)
+}
+
+func trustedSubnetHandler() http.Handler {
+	fn := getUserTrustedSubnet
 	return http.HandlerFunc(fn)
 }

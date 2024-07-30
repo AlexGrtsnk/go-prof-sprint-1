@@ -161,7 +161,7 @@ func DataBaseDownloadFullURLPagePost(id string, longURL string, token string) (e
 }
 
 // DataBaseCfg конфигурирует базу данных
-func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err error) {
+func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string, trustedSubnet string) (err error) {
 	db, err := NewDB()
 	if err != nil {
 		return err
@@ -173,7 +173,7 @@ func DataBaseCfg(flagRunAddr string, apiRunAddr string, fileName string) (err er
 		return err
 	}
 	defer db.Close()
-	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `')`
+	quer := `INSERT INTO cfg(flagRunAddr, apiRunAddr, flnm, tssb) VALUES ('` + string(flagRunAddr) + `', '` + string(apiRunAddr) + `', '` + fileName + `', '` + trustedSubnet + `')`
 	_, err = db.Exec(quer)
 	if err != nil {
 		return err
@@ -287,6 +287,96 @@ func DataBaseFileNameSelect() (flnm string, err error) {
 		return "", err
 	}
 	return apiRunAddr, nil
+}
+
+// DataBaseTrustedSubnetSelect возвращает адрес доверенной подсети
+func DataBaseTrustedSubnetSelect() (tssb string, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return "", err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return "", err
+	}
+	defer db.Close()
+	quer := "SELECT flnm FROM cfg WHERE id = 1;"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return "", rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&tssb)
+	if err != nil {
+		return "", err
+	}
+	return tssb, nil
+}
+
+// DataBaseURLsCountSelect возвращает количество сокращенных сервисом url
+func DataBaseURLsCountSelect() (cntURL int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return cntURL, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return cntURL, err
+	}
+	defer db.Close()
+	quer := "SELECT COUNT(*) FROM short_longURL"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return cntURL, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return cntURL, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&cntURL)
+	if err != nil {
+		return cntURL, err
+	}
+	return cntURL, nil
+}
+
+// DataBaseUsersCountSelect возвращает количество пользователей сервиса
+func DataBaseUsersCountSelect() (cntUser int, err error) {
+	var db *sql.DB
+	dbName, dbms, err := DataBaseSelfConfigGet()
+	if err != nil {
+		return cntUser, err
+	}
+
+	db, err = sql.Open(dbms, dbName)
+	if err != nil {
+		return cntUser, err
+	}
+	defer db.Close()
+	quer := "SELECT COUNT(DISTINCT token) FROM short_longURL"
+	rows, err := db.Query(quer)
+	if err != nil {
+		return cntUser, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return cntUser, rows.Err()
+	}
+	rows.Next()
+	err = rows.Scan(&cntUser)
+	if err != nil {
+		return cntUser, err
+	}
+	return cntUser, nil
 }
 
 // DataBaseJSONPage возвращает id записи с конкретными параметрами

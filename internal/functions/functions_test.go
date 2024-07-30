@@ -75,7 +75,7 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	}
 	var cfg apcfg.Config
 	err := env.Parse(&cfg)
-	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config := apcfg.ParseFlags()
+	flagRunAddr, apiRunAddr, fileName, databaseDSN, enableHTTPS, config, trustedSubnet := apcfg.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,6 +94,7 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 	}
 	log.Println(enableHTTPS)
 	log.Println(config)
+	log.Println(trustedSubnet)
 	err = db.DataBaseStartConfig(databaseDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -104,7 +105,7 @@ func TestDownloadFullURLPageAllGood(t *testing.T) {
 			log.Fatal(err)
 		}
 	}
-	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName)
+	err = db.DataBaseCfg(flagRunAddr, apiRunAddr, fileName, trustedSubnet)
 	if err != nil {
 		log.Fatal(err)
 	}
