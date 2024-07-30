@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package demo;
+
+option go_package = "demo/proto";
+
+message URL {
+  string longURL = 1;  // изначальный url, отправленный пользователем
+  string shortURL = 2; // сокращенный url
+}
+
+message AddURLRequest {
+  URL url = 1;
+}
+
+message AddURLResponse {
+  string error = 1; // ошибка
+}
+
+message ListURLsRequest {
+  int32 offset = 1; // смещение выборки
+  int32 limit = 2;  // количество элементов
+}
+
+message ListURLsResponse {
+  int32 count = 1;            // общее количество сокращенных сервисом url
+  repeated string URLs = 2; // список сокращенных url
+}
+
+message GetURLRequest {
+  string URL = 1;
+}
+
+message GetURLResponse {
+  URL   url = 1;
+  string error = 2;
+}
+
+message DelURLRequest {
+  string URL = 1;
+}
+
+message DelURLResponse {
+  string error = 1;
+}
+
+service URLs {
+  rpc AddURL(AddURLRequest) returns (AddURLResponse);
+  rpc ListURLs(ListURLsRequest) returns (ListURLsResponse);
+  rpc GetURL(GetURLRequest) returns (GetURLResponse);
+  rpc DelURL(DelURLRequest) returns (DelURLResponse);
+}
